@@ -74,7 +74,7 @@ function LoginPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Checkbox id="remember" {...register("remember")} />
+          <Checkbox id="remember" defaultChecked />
           <Label htmlFor="remember" className="text-sm text-muted-foreground font-normal">Remember me for 30 days</Label>
         </div>
 
