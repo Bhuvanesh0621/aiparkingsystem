@@ -10,7 +10,7 @@ import { StatCard } from "@/components/app/stat-card";
 import { StatusBadge } from "@/components/app/status-badge";
 import { revenueSeries, occupancySeries, bookings, adminUsers } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/admin/")({
   head: () => ({ meta: [{ title: "Admin — SmartPark AI" }] }),
   component: AdminPage,
 });
