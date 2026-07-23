@@ -9,31 +9,52 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TimerRouteImport } from './routes/timer'
 import { Route as TicketRouteImport } from './routes/ticket'
+import { Route as StatusRouteImport } from './routes/status'
 import { Route as RegisterRouteImport } from './routes/register'
+import { Route as RatingRouteImport } from './routes/rating'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PaymentSuccessRouteImport } from './routes/payment-success'
 import { Route as PaymentRouteImport } from './routes/payment'
 import { Route as ParkingRouteImport } from './routes/parking'
 import { Route as OtpRouteImport } from './routes/otp'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NavigateRouteImport } from './routes/navigate'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as HistoryRouteImport } from './routes/history'
+import { Route as ExitRouteImport } from './routes/exit'
+import { Route as BookingsRouteImport } from './routes/bookings'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BookingSummaryRouteImport } from './routes/booking.summary'
 import { Route as BookingScheduleRouteImport } from './routes/booking.schedule'
 
+const TimerRoute = TimerRouteImport.update({
+  id: '/timer',
+  path: '/timer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TicketRoute = TicketRouteImport.update({
   id: '/ticket',
   path: '/ticket',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StatusRoute = StatusRouteImport.update({
+  id: '/status',
+  path: '/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RatingRoute = RatingRouteImport.update({
+  id: '/rating',
+  path: '/rating',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -66,6 +87,11 @@ const OnboardingRoute = OnboardingRouteImport.update({
   path: '/onboarding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const NavigateRoute = NavigateRouteImport.update({
   id: '/navigate',
   path: '/navigate',
@@ -91,6 +117,16 @@ const HistoryRoute = HistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExitRoute = ExitRouteImport.update({
+  id: '/exit',
+  path: '/exit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingsRoute = BookingsRouteImport.update({
+  id: '/bookings',
+  path: '/bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -109,56 +145,74 @@ const BookingScheduleRoute = BookingScheduleRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bookings': typeof BookingsRoute
+  '/exit': typeof ExitRoute
   '/history': typeof HistoryRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
   '/navigate': typeof NavigateRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/otp': typeof OtpRoute
   '/parking': typeof ParkingRoute
   '/payment': typeof PaymentRoute
   '/payment-success': typeof PaymentSuccessRoute
   '/profile': typeof ProfileRoute
+  '/rating': typeof RatingRoute
   '/register': typeof RegisterRoute
+  '/status': typeof StatusRoute
   '/ticket': typeof TicketRoute
+  '/timer': typeof TimerRoute
   '/booking/schedule': typeof BookingScheduleRoute
   '/booking/summary': typeof BookingSummaryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bookings': typeof BookingsRoute
+  '/exit': typeof ExitRoute
   '/history': typeof HistoryRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
   '/navigate': typeof NavigateRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/otp': typeof OtpRoute
   '/parking': typeof ParkingRoute
   '/payment': typeof PaymentRoute
   '/payment-success': typeof PaymentSuccessRoute
   '/profile': typeof ProfileRoute
+  '/rating': typeof RatingRoute
   '/register': typeof RegisterRoute
+  '/status': typeof StatusRoute
   '/ticket': typeof TicketRoute
+  '/timer': typeof TimerRoute
   '/booking/schedule': typeof BookingScheduleRoute
   '/booking/summary': typeof BookingSummaryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bookings': typeof BookingsRoute
+  '/exit': typeof ExitRoute
   '/history': typeof HistoryRoute
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
   '/navigate': typeof NavigateRoute
+  '/notifications': typeof NotificationsRoute
   '/onboarding': typeof OnboardingRoute
   '/otp': typeof OtpRoute
   '/parking': typeof ParkingRoute
   '/payment': typeof PaymentRoute
   '/payment-success': typeof PaymentSuccessRoute
   '/profile': typeof ProfileRoute
+  '/rating': typeof RatingRoute
   '/register': typeof RegisterRoute
+  '/status': typeof StatusRoute
   '/ticket': typeof TicketRoute
+  '/timer': typeof TimerRoute
   '/booking/schedule': typeof BookingScheduleRoute
   '/booking/summary': typeof BookingSummaryRoute
 }
@@ -166,80 +220,111 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/bookings'
+    | '/exit'
     | '/history'
     | '/home'
     | '/login'
     | '/map'
     | '/navigate'
+    | '/notifications'
     | '/onboarding'
     | '/otp'
     | '/parking'
     | '/payment'
     | '/payment-success'
     | '/profile'
+    | '/rating'
     | '/register'
+    | '/status'
     | '/ticket'
+    | '/timer'
     | '/booking/schedule'
     | '/booking/summary'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/bookings'
+    | '/exit'
     | '/history'
     | '/home'
     | '/login'
     | '/map'
     | '/navigate'
+    | '/notifications'
     | '/onboarding'
     | '/otp'
     | '/parking'
     | '/payment'
     | '/payment-success'
     | '/profile'
+    | '/rating'
     | '/register'
+    | '/status'
     | '/ticket'
+    | '/timer'
     | '/booking/schedule'
     | '/booking/summary'
   id:
     | '__root__'
     | '/'
+    | '/bookings'
+    | '/exit'
     | '/history'
     | '/home'
     | '/login'
     | '/map'
     | '/navigate'
+    | '/notifications'
     | '/onboarding'
     | '/otp'
     | '/parking'
     | '/payment'
     | '/payment-success'
     | '/profile'
+    | '/rating'
     | '/register'
+    | '/status'
     | '/ticket'
+    | '/timer'
     | '/booking/schedule'
     | '/booking/summary'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BookingsRoute: typeof BookingsRoute
+  ExitRoute: typeof ExitRoute
   HistoryRoute: typeof HistoryRoute
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   MapRoute: typeof MapRoute
   NavigateRoute: typeof NavigateRoute
+  NotificationsRoute: typeof NotificationsRoute
   OnboardingRoute: typeof OnboardingRoute
   OtpRoute: typeof OtpRoute
   ParkingRoute: typeof ParkingRoute
   PaymentRoute: typeof PaymentRoute
   PaymentSuccessRoute: typeof PaymentSuccessRoute
   ProfileRoute: typeof ProfileRoute
+  RatingRoute: typeof RatingRoute
   RegisterRoute: typeof RegisterRoute
+  StatusRoute: typeof StatusRoute
   TicketRoute: typeof TicketRoute
+  TimerRoute: typeof TimerRoute
   BookingScheduleRoute: typeof BookingScheduleRoute
   BookingSummaryRoute: typeof BookingSummaryRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/timer': {
+      id: '/timer'
+      path: '/timer'
+      fullPath: '/timer'
+      preLoaderRoute: typeof TimerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ticket': {
       id: '/ticket'
       path: '/ticket'
@@ -247,11 +332,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TicketRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/status': {
+      id: '/status'
+      path: '/status'
+      fullPath: '/status'
+      preLoaderRoute: typeof StatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
       fullPath: '/register'
       preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rating': {
+      id: '/rating'
+      path: '/rating'
+      fullPath: '/rating'
+      preLoaderRoute: typeof RatingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -296,6 +395,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/navigate': {
       id: '/navigate'
       path: '/navigate'
@@ -331,6 +437,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HistoryRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/exit': {
+      id: '/exit'
+      path: '/exit'
+      fullPath: '/exit'
+      preLoaderRoute: typeof ExitRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bookings': {
+      id: '/bookings'
+      path: '/bookings'
+      fullPath: '/bookings'
+      preLoaderRoute: typeof BookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -357,19 +477,25 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BookingsRoute: BookingsRoute,
+  ExitRoute: ExitRoute,
   HistoryRoute: HistoryRoute,
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   MapRoute: MapRoute,
   NavigateRoute: NavigateRoute,
+  NotificationsRoute: NotificationsRoute,
   OnboardingRoute: OnboardingRoute,
   OtpRoute: OtpRoute,
   ParkingRoute: ParkingRoute,
   PaymentRoute: PaymentRoute,
   PaymentSuccessRoute: PaymentSuccessRoute,
   ProfileRoute: ProfileRoute,
+  RatingRoute: RatingRoute,
   RegisterRoute: RegisterRoute,
+  StatusRoute: StatusRoute,
   TicketRoute: TicketRoute,
+  TimerRoute: TimerRoute,
   BookingScheduleRoute: BookingScheduleRoute,
   BookingSummaryRoute: BookingSummaryRoute,
 }
