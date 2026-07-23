@@ -1,92 +1,141 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { Screen, TopBar, BottomNav } from "@/components/mobile/shell";
-import { user } from "@/lib/mock-data";
-import { Car, CreditCard, Bell, ShieldCheck, HelpCircle, LogOut, ChevronRight, Wallet, Gift, Star, Plus } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { Camera, Car, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { AppShell } from "@/components/app/app-shell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/profile")({
-  head: () => ({ meta: [
-    { title: "Profile — SmartPark AI" },
-    { name: "description", content: "Manage your vehicles, payments, wallet and preferences." },
-  ] }),
+  head: () => ({ meta: [{ title: "Profile — SmartPark AI" }] }),
   component: ProfilePage,
 });
 
-function Row({ icon: Icon, title, desc, right, tone = "muted" }: any) {
-  const tones: Record<string, string> = { muted: "bg-muted text-muted-foreground", primary: "bg-primary/10 text-primary", secondary: "bg-secondary/12 text-secondary" };
+function ProfilePage() {
+  const [dark, setDark] = useState(true);
+  const [vehicles, setVehicles] = useState([
+    { id: 1, no: "MH 12 AB 4521", type: "Car" },
+    { id: 2, no: "MH 12 XY 9987", type: "EV" },
+  ]);
+
   return (
-    <div className="flex items-center gap-3 py-3">
-      <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${tones[tone]}`}><Icon className="h-4 w-4" /></div>
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold">{title}</div>
-        {desc && <div className="text-xs text-muted-foreground truncate">{desc}</div>}
+    <AppShell>
+      <div className="mb-6">
+        <h1 className="font-display text-3xl font-bold tracking-tight">Profile</h1>
+        <p className="text-muted-foreground mt-1">Manage your account, vehicles and preferences.</p>
       </div>
-      {right ?? <ChevronRight className="h-4 w-4 text-muted-foreground" />}
+
+      <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
+        <div className="glass rounded-2xl p-6 text-center h-fit">
+          <div className="relative mx-auto h-24 w-24">
+            <div className="h-24 w-24 rounded-full bg-[linear-gradient(135deg,var(--primary),var(--secondary))] grid place-items-center text-3xl font-bold text-white shadow-glow">AS</div>
+            <button className="absolute -bottom-1 -right-1 h-8 w-8 rounded-full bg-card border border-white/10 grid place-items-center hover:bg-white/10">
+              <Camera className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="mt-4 font-semibold text-lg">Aarav Sharma</div>
+          <div className="text-xs text-muted-foreground">aarav@smartpark.ai</div>
+          <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+            <Stat n="24" l="Bookings" />
+            <Stat n="3" l="Vehicles" />
+            <Stat n="₹4.2k" l="Spent" />
+          </div>
+        </div>
+
+        <Tabs defaultValue="account" className="w-full">
+          <TabsList className="glass rounded-xl">
+            <TabsTrigger value="account">Account</TabsTrigger>
+            <TabsTrigger value="password">Password</TabsTrigger>
+            <TabsTrigger value="vehicles">Vehicles</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="account" className="glass rounded-2xl p-6 mt-4 space-y-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field label="Full name" defaultValue="Aarav Sharma" />
+              <Field label="Email" defaultValue="aarav@smartpark.ai" />
+              <Field label="Phone" defaultValue="+91 98765 43210" />
+              <Field label="City" defaultValue="Mumbai" />
+            </div>
+            <Button variant="hero" onClick={() => toast.success("Profile updated")}>Save changes</Button>
+          </TabsContent>
+
+          <TabsContent value="password" className="glass rounded-2xl p-6 mt-4 space-y-5 max-w-md">
+            <Field label="Current password" type="password" />
+            <Field label="New password" type="password" />
+            <Field label="Confirm new password" type="password" />
+            <Button variant="hero" onClick={() => toast.success("Password updated")}>Update password</Button>
+          </TabsContent>
+
+          <TabsContent value="vehicles" className="glass rounded-2xl p-6 mt-4 space-y-4">
+            {vehicles.map((v) => (
+              <div key={v.id} className="flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-4">
+                <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/15 border border-primary/30 text-primary">
+                  <Car className="h-5 w-5" />
+                </div>
+                <div className="flex-1">
+                  <div className="font-semibold">{v.no}</div>
+                  <div className="text-xs text-muted-foreground">{v.type}</div>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setVehicles((xs) => xs.filter((x) => x.id !== v.id))}><Trash2 className="h-4 w-4" /></Button>
+              </div>
+            ))}
+            <Button variant="glass" className="w-full" onClick={() => setVehicles((xs) => [...xs, { id: Date.now(), no: "New vehicle", type: "Car" }])}>
+              <Plus className="h-4 w-4" /> Add vehicle
+            </Button>
+          </TabsContent>
+
+          <TabsContent value="notifications" className="glass rounded-2xl p-6 mt-4 space-y-4">
+            <Toggle label="Booking confirmations" desc="Email & push on new bookings" defaultChecked />
+            <Toggle label="Reminders" desc="30 min before your slot" defaultChecked />
+            <Toggle label="Promotions" desc="Cashback and offers" />
+            <div className="pt-4 border-t border-border/50 flex items-center justify-between">
+              <div>
+                <div className="font-medium">Dark mode</div>
+                <div className="text-xs text-muted-foreground">Toggle theme (client-side)</div>
+              </div>
+              <Switch checked={dark} onCheckedChange={(v) => {
+                setDark(v);
+                document.documentElement.classList.toggle("dark", v);
+                document.documentElement.classList.toggle("light", !v);
+              }} />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AppShell>
+  );
+}
+
+function Stat({ n, l }: { n: string; l: string }) {
+  return (
+    <div className="rounded-lg bg-white/5 border border-white/10 py-2">
+      <div className="font-bold text-sm">{n}</div>
+      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{l}</div>
     </div>
   );
 }
 
-function ProfilePage() {
+function Field({ label, defaultValue, type = "text" }: { label: string; defaultValue?: string; type?: string }) {
   return (
-    <Screen>
-      <TopBar title="Profile" back={false} />
-      <div className="px-5 pt-2 pb-6 space-y-5">
-        <div className="rounded-3xl bg-gradient-to-br from-primary to-[color:oklch(0.6_0.2_230)] text-white p-5 shadow-elegant">
-          <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-white/20 grid place-items-center text-2xl font-bold">A</div>
-            <div className="min-w-0">
-              <div className="text-lg font-bold truncate">{user.name}</div>
-              <div className="text-sm opacity-90 truncate">{user.email}</div>
-              <div className="mt-1 inline-flex items-center gap-1 rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold">
-                <Star className="h-3 w-3 fill-white" /> {user.tier} member · since {user.memberSince}
-              </div>
-            </div>
-          </div>
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-white/15 p-3">
-              <div className="text-[10px] uppercase tracking-wider opacity-80">Wallet</div>
-              <div className="mt-0.5 text-xl font-bold">₹{user.wallet}</div>
-            </div>
-            <div className="rounded-2xl bg-white/15 p-3">
-              <div className="text-[10px] uppercase tracking-wider opacity-80">Rewards</div>
-              <div className="mt-0.5 text-xl font-bold">1,245 pts</div>
-            </div>
-          </div>
-        </div>
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <Input defaultValue={defaultValue} type={type} className="h-11 bg-white/5" />
+    </div>
+  );
+}
 
-        <div className="rounded-3xl border border-border bg-card p-2">
-          <div className="px-3 pt-2 flex items-center justify-between">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">My vehicles</div>
-            <button className="text-xs text-primary font-semibold inline-flex items-center gap-1"><Plus className="h-3 w-3" /> Add</button>
-          </div>
-          {user.vehicles.map((v) => (
-            <Row key={v.plate} icon={Car} title={v.model} desc={`${v.plate} · ${v.type}${v.primary ? " · Primary" : ""}`} tone="primary" />
-          ))}
-        </div>
-
-        <div className="rounded-3xl border border-border bg-card p-2">
-          <div className="px-3 pt-2 flex items-center justify-between">
-            <div className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Payment</div>
-            <button className="text-xs text-primary font-semibold inline-flex items-center gap-1"><Plus className="h-3 w-3" /> Add card</button>
-          </div>
-          {user.cards.map((c) => (
-            <Row key={c.id} icon={CreditCard} title={`${c.brand} •• ${c.last4}`} desc={c.primary ? "Default payment method" : "Backup"} tone="secondary" />
-          ))}
-          <Row icon={Wallet} title="SmartPark Wallet" desc={`Balance ₹${user.wallet}`} tone="muted" />
-        </div>
-
-        <div className="rounded-3xl border border-border bg-card p-2">
-          <div className="px-3 pt-2 text-xs uppercase tracking-wider text-muted-foreground font-semibold">Preferences</div>
-          <Row icon={Bell} title="Notifications" desc="Booking, extension, offers" tone="muted" />
-          <Row icon={ShieldCheck} title="Privacy & security" desc="2FA · Biometric login" tone="muted" />
-          <Row icon={Gift} title="Refer & earn" desc="Get ₹100 for every friend" tone="muted" />
-          <Row icon={HelpCircle} title="Help center" tone="muted" />
-        </div>
-
-        <Link to="/login" className="block rounded-2xl border border-destructive/30 bg-destructive/5 text-destructive p-4 text-sm font-semibold text-center inline-flex items-center justify-center gap-2">
-          <LogOut className="h-4 w-4" /> Sign out
-        </Link>
+function Toggle({ label, desc, defaultChecked }: { label: string; desc: string; defaultChecked?: boolean }) {
+  return (
+    <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/5 p-4">
+      <div>
+        <div className="font-medium">{label}</div>
+        <div className="text-xs text-muted-foreground">{desc}</div>
       </div>
-      <BottomNav />
-    </Screen>
+      <Switch defaultChecked={defaultChecked} />
+    </div>
   );
 }

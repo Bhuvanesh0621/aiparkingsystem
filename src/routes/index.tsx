@@ -48,7 +48,7 @@ const faqs = [
 
 function LandingPage() {
   return (
-    <div className="landing-dark relative min-h-screen bg-background text-foreground overflow-hidden">
+    <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
       <div className="absolute inset-x-0 top-0 h-[900px] bg-hero pointer-events-none" />
       <FloatingNav />
@@ -97,7 +97,7 @@ function LandingPage() {
               <Link to="/register">Book Parking <ArrowRight className="h-4 w-4" /></Link>
             </Button>
             <Button asChild variant="glass" size="xl">
-              <Link to="/onboarding">Live demo</Link>
+              <Link to="/dashboard">Live demo</Link>
             </Button>
           </motion.div>
 
@@ -277,7 +277,7 @@ function LandingPage() {
                 <Link to="/register">Get started free <ArrowRight className="h-4 w-4" /></Link>
               </Button>
               <Button asChild variant="glass" size="xl">
-                <Link to="/home">Open app</Link>
+                <Link to="/admin">See admin dashboard</Link>
               </Button>
             </div>
           </div>
