@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as OtpRouteImport } from './routes/otp'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HistoryRouteImport } from './routes/history'
@@ -24,6 +25,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OtpRoute = OtpRouteImport.update({
+  id: '/otp',
+  path: '/otp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardingRoute = OnboardingRouteImport.update({
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/otp': typeof OtpRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/otp': typeof OtpRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/login': typeof LoginRoute
   '/onboarding': typeof OnboardingRoute
+  '/otp': typeof OtpRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
 }
@@ -79,16 +88,25 @@ export interface FileRouteTypes {
     | '/history'
     | '/login'
     | '/onboarding'
+    | '/otp'
     | '/profile'
     | '/register'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/history' | '/login' | '/onboarding' | '/profile' | '/register'
+  to:
+    | '/'
+    | '/history'
+    | '/login'
+    | '/onboarding'
+    | '/otp'
+    | '/profile'
+    | '/register'
   id:
     | '__root__'
     | '/'
     | '/history'
     | '/login'
     | '/onboarding'
+    | '/otp'
     | '/profile'
     | '/register'
   fileRoutesById: FileRoutesById
@@ -98,6 +116,7 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   LoginRoute: typeof LoginRoute
   OnboardingRoute: typeof OnboardingRoute
+  OtpRoute: typeof OtpRoute
   ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
 }
@@ -116,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/otp': {
+      id: '/otp'
+      path: '/otp'
+      fullPath: '/otp'
+      preLoaderRoute: typeof OtpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/onboarding': {
@@ -154,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   LoginRoute: LoginRoute,
   OnboardingRoute: OnboardingRoute,
+  OtpRoute: OtpRoute,
   ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
 }
