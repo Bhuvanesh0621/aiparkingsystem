@@ -1,122 +1,57 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { useState } from "react";
 import { toast } from "sonner";
-import { AuthLayout } from "@/components/site/auth-layout";
+import { ArrowRight, Car, User, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Controller } from "react-hook-form";
 
 export const Route = createFileRoute("/register")({
-  head: () => ({
-    meta: [
-      { title: "Create account — SmartPark AI" },
-      { name: "description", content: "Create your SmartPark AI account and book your first bay." },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Create account — SmartPark AI" }] }),
   component: RegisterPage,
 });
 
-const schema = z.object({
-  name: z.string().trim().min(2, "Name too short").max(80),
-  email: z.string().trim().email().max(255),
-  phone: z.string().trim().min(7).max(20),
-  password: z.string().min(8, "Min 8 characters").max(72),
-  confirm: z.string(),
-  vehicleNumber: z.string().trim().min(4).max(20),
-  vehicleType: z.enum(["car", "suv", "bike", "ev"]),
-}).refine((d) => d.password === d.confirm, { path: ["confirm"], message: "Passwords don't match" });
-type FormData = z.infer<typeof schema>;
+function Field({ icon: Icon, ...props }: { icon: any } & React.InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-4 h-14 focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/10 transition">
+      <Icon className="h-4 w-4 text-muted-foreground" />
+      <Input {...props} className="border-0 bg-transparent focus-visible:ring-0 h-12 text-base p-0" />
+    </div>
+  );
+}
 
 function RegisterPage() {
-  const navigate = useNavigate();
-  const { register, control, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    defaultValues: { name: "", email: "", phone: "", password: "", confirm: "", vehicleNumber: "", vehicleType: "car" },
-  });
-
-  const onSubmit = async () => {
-    await new Promise((r) => setTimeout(r, 700));
-    toast.success("Account created — welcome to SmartPark");
-    navigate({ to: "/dashboard" });
-  };
-
+  const [f, setF] = useState({ name: "", email: "", phone: "" });
+  const nav = useNavigate();
   return (
-    <AuthLayout
-      title="Create your account"
-      subtitle="Book bays, generate QR passes, and track your parking history."
-      footer={<>Already registered? <Link to="/login" className="text-primary hover:underline font-medium">Sign in</Link></>}
-    >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="name">Full name</Label>
-            <Input id="name" placeholder="Aarav Sharma" className="h-11 bg-white/5" {...register("name")} />
-            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone</Label>
-            <Input id="phone" placeholder="+91 98…" className="h-11 bg-white/5" {...register("phone")} />
-            {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
-          </div>
+    <div className="min-h-screen bg-background">
+      <div className="mx-auto max-w-md px-6 py-10">
+        <div className="flex items-center gap-2">
+          <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary text-primary-foreground"><Car className="h-4 w-4" /></span>
+          <span className="font-semibold">SmartPark<span className="text-primary">.AI</span></span>
+        </div>
+        <div className="mt-10">
+          <h1 className="text-3xl font-bold tracking-tight">Create account</h1>
+          <p className="mt-2 text-muted-foreground">Takes less than a minute. Free forever.</p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="you@company.com" className="h-11 bg-white/5" {...register("email")} />
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" placeholder="••••••••" className="h-11 bg-white/5" {...register("password")} />
-            {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm">Confirm</Label>
-            <Input id="confirm" type="password" placeholder="••••••••" className="h-11 bg-white/5" {...register("confirm")} />
-            {errors.confirm && <p className="text-xs text-destructive">{errors.confirm.message}</p>}
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="vehicleNumber">Vehicle number</Label>
-            <Input id="vehicleNumber" placeholder="MH 12 AB 4521" className="h-11 bg-white/5" {...register("vehicleNumber")} />
-            {errors.vehicleNumber && <p className="text-xs text-destructive">{errors.vehicleNumber.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label>Vehicle type</Label>
-            <Controller
-              control={control}
-              name="vehicleType"
-              render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className="h-11 bg-white/5"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="car">Car</SelectItem>
-                    <SelectItem value="suv">SUV</SelectItem>
-                    <SelectItem value="bike">Bike</SelectItem>
-                    <SelectItem value="ev">EV</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-            />
-          </div>
-        </div>
-
-        <Button type="submit" variant="hero" size="lg" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Creating…" : "Create account"}
-        </Button>
-
-        <p className="text-[11px] text-muted-foreground text-center">
-          By continuing, you agree to our Terms and Privacy Policy.
+        <form
+          onSubmit={(e) => { e.preventDefault(); toast.success("Verify your phone"); nav({ to: "/otp" }); }}
+          className="mt-8 space-y-4"
+        >
+          <Field icon={User} placeholder="Full name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} />
+          <Field icon={Mail} placeholder="Email" type="email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
+          <Field icon={Phone} placeholder="Mobile number" inputMode="numeric" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value.replace(/\D/g, "") })} />
+          <p className="text-xs text-muted-foreground">
+            By continuing you agree to our <span className="text-primary">Terms</span> and <span className="text-primary">Privacy Policy</span>.
+          </p>
+          <Button type="submit" size="lg" className="w-full h-12 rounded-full text-base">
+            Continue <ArrowRight className="h-4 w-4" />
+          </Button>
+        </form>
+        <p className="mt-8 text-center text-sm text-muted-foreground">
+          Have an account? <Link to="/login" className="text-primary font-semibold">Sign in</Link>
         </p>
-      </form>
-    </AuthLayout>
+      </div>
+    </div>
   );
 }
