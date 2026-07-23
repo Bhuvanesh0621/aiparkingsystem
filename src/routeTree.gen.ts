@@ -9,17 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TicketRouteImport } from './routes/ticket'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as PaymentSuccessRouteImport } from './routes/payment-success'
+import { Route as PaymentRouteImport } from './routes/payment'
 import { Route as ParkingRouteImport } from './routes/parking'
 import { Route as OtpRouteImport } from './routes/otp'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
+import { Route as NavigateRouteImport } from './routes/navigate'
 import { Route as MapRouteImport } from './routes/map'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomeRouteImport } from './routes/home'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BookingSummaryRouteImport } from './routes/booking.summary'
+import { Route as BookingScheduleRouteImport } from './routes/booking.schedule'
 
+const TicketRoute = TicketRouteImport.update({
+  id: '/ticket',
+  path: '/ticket',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -28,6 +39,16 @@ const RegisterRoute = RegisterRouteImport.update({
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentSuccessRoute = PaymentSuccessRouteImport.update({
+  id: '/payment-success',
+  path: '/payment-success',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentRoute = PaymentRouteImport.update({
+  id: '/payment',
+  path: '/payment',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ParkingRoute = ParkingRouteImport.update({
@@ -43,6 +64,11 @@ const OtpRoute = OtpRouteImport.update({
 const OnboardingRoute = OnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NavigateRoute = NavigateRouteImport.update({
+  id: '/navigate',
+  path: '/navigate',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MapRoute = MapRouteImport.update({
@@ -70,6 +96,16 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BookingSummaryRoute = BookingSummaryRouteImport.update({
+  id: '/booking/summary',
+  path: '/booking/summary',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BookingScheduleRoute = BookingScheduleRouteImport.update({
+  id: '/booking/schedule',
+  path: '/booking/schedule',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -77,11 +113,17 @@ export interface FileRoutesByFullPath {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
+  '/navigate': typeof NavigateRoute
   '/onboarding': typeof OnboardingRoute
   '/otp': typeof OtpRoute
   '/parking': typeof ParkingRoute
+  '/payment': typeof PaymentRoute
+  '/payment-success': typeof PaymentSuccessRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
+  '/ticket': typeof TicketRoute
+  '/booking/schedule': typeof BookingScheduleRoute
+  '/booking/summary': typeof BookingSummaryRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -89,11 +131,17 @@ export interface FileRoutesByTo {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
+  '/navigate': typeof NavigateRoute
   '/onboarding': typeof OnboardingRoute
   '/otp': typeof OtpRoute
   '/parking': typeof ParkingRoute
+  '/payment': typeof PaymentRoute
+  '/payment-success': typeof PaymentSuccessRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
+  '/ticket': typeof TicketRoute
+  '/booking/schedule': typeof BookingScheduleRoute
+  '/booking/summary': typeof BookingSummaryRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -102,11 +150,17 @@ export interface FileRoutesById {
   '/home': typeof HomeRoute
   '/login': typeof LoginRoute
   '/map': typeof MapRoute
+  '/navigate': typeof NavigateRoute
   '/onboarding': typeof OnboardingRoute
   '/otp': typeof OtpRoute
   '/parking': typeof ParkingRoute
+  '/payment': typeof PaymentRoute
+  '/payment-success': typeof PaymentSuccessRoute
   '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
+  '/ticket': typeof TicketRoute
+  '/booking/schedule': typeof BookingScheduleRoute
+  '/booking/summary': typeof BookingSummaryRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -116,11 +170,17 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/map'
+    | '/navigate'
     | '/onboarding'
     | '/otp'
     | '/parking'
+    | '/payment'
+    | '/payment-success'
     | '/profile'
     | '/register'
+    | '/ticket'
+    | '/booking/schedule'
+    | '/booking/summary'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -128,11 +188,17 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/map'
+    | '/navigate'
     | '/onboarding'
     | '/otp'
     | '/parking'
+    | '/payment'
+    | '/payment-success'
     | '/profile'
     | '/register'
+    | '/ticket'
+    | '/booking/schedule'
+    | '/booking/summary'
   id:
     | '__root__'
     | '/'
@@ -140,11 +206,17 @@ export interface FileRouteTypes {
     | '/home'
     | '/login'
     | '/map'
+    | '/navigate'
     | '/onboarding'
     | '/otp'
     | '/parking'
+    | '/payment'
+    | '/payment-success'
     | '/profile'
     | '/register'
+    | '/ticket'
+    | '/booking/schedule'
+    | '/booking/summary'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -153,15 +225,28 @@ export interface RootRouteChildren {
   HomeRoute: typeof HomeRoute
   LoginRoute: typeof LoginRoute
   MapRoute: typeof MapRoute
+  NavigateRoute: typeof NavigateRoute
   OnboardingRoute: typeof OnboardingRoute
   OtpRoute: typeof OtpRoute
   ParkingRoute: typeof ParkingRoute
+  PaymentRoute: typeof PaymentRoute
+  PaymentSuccessRoute: typeof PaymentSuccessRoute
   ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
+  TicketRoute: typeof TicketRoute
+  BookingScheduleRoute: typeof BookingScheduleRoute
+  BookingSummaryRoute: typeof BookingSummaryRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/ticket': {
+      id: '/ticket'
+      path: '/ticket'
+      fullPath: '/ticket'
+      preLoaderRoute: typeof TicketRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -174,6 +259,20 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment-success': {
+      id: '/payment-success'
+      path: '/payment-success'
+      fullPath: '/payment-success'
+      preLoaderRoute: typeof PaymentSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payment': {
+      id: '/payment'
+      path: '/payment'
+      fullPath: '/payment'
+      preLoaderRoute: typeof PaymentRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/parking': {
@@ -195,6 +294,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/navigate': {
+      id: '/navigate'
+      path: '/navigate'
+      fullPath: '/navigate'
+      preLoaderRoute: typeof NavigateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/map': {
@@ -232,6 +338,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/booking/summary': {
+      id: '/booking/summary'
+      path: '/booking/summary'
+      fullPath: '/booking/summary'
+      preLoaderRoute: typeof BookingSummaryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/booking/schedule': {
+      id: '/booking/schedule'
+      path: '/booking/schedule'
+      fullPath: '/booking/schedule'
+      preLoaderRoute: typeof BookingScheduleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -241,11 +361,17 @@ const rootRouteChildren: RootRouteChildren = {
   HomeRoute: HomeRoute,
   LoginRoute: LoginRoute,
   MapRoute: MapRoute,
+  NavigateRoute: NavigateRoute,
   OnboardingRoute: OnboardingRoute,
   OtpRoute: OtpRoute,
   ParkingRoute: ParkingRoute,
+  PaymentRoute: PaymentRoute,
+  PaymentSuccessRoute: PaymentSuccessRoute,
   ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
+  TicketRoute: TicketRoute,
+  BookingScheduleRoute: BookingScheduleRoute,
+  BookingSummaryRoute: BookingSummaryRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
