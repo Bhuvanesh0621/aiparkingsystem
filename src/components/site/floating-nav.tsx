@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { Car } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const links = [
   { label: "Features", href: "#features" },
@@ -37,11 +38,12 @@ export function FloatingNav() {
           ))}
         </div>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
             <Link to="/login">Sign in</Link>
           </Button>
           <Button asChild variant="hero" size="sm">
-            <Link to="/register">Book Parking</Link>
+            <Link to="/register">Book</Link>
           </Button>
         </div>
       </nav>

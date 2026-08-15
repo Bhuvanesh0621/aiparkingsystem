@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { Plus, Trash2, Edit2, Building2 } from "lucide-react";
+import { redirect } from "@tanstack/react-router";
+import { auth } from "@/lib/auth";
+import React, { useState, lazy, Suspense } from "react";
+import { Plus, Trash2, Edit2, Building2, Zap, Power } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/app/app-shell";
 import { Button } from "@/components/ui/button";
@@ -8,18 +10,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/app/status-badge";
-import { parkingSlots } from "@/lib/mock-data";
+import { useStore, store, ParkingSlot, VehicleType, SlotStatus } from "@/lib/store";
+
+const SmartCityBackground = lazy(() => import("@/components/admin/smart-city-background"));
 
 export const Route = createFileRoute("/admin/parking")({
-  head: () => ({ meta: [{ title: "Manage Parking — SmartPark AI" }] }),
+  head: () => ({ meta: [{ title: "Manage Parking — Admin" }] }),
+  beforeLoad: async () => {
+    if (!(await auth.isAdmin())) throw redirect({ to: "/dashboard" });
+  },
   component: AdminParkingPage,
 });
 
 function AdminParkingPage() {
-  const [slots, setSlots] = useState(parkingSlots);
+  const { slots } = useStore();
   const [floor, setFloor] = useState("1");
   const [count, setCount] = useState("8");
-  const [type, setType] = useState("car");
+  const [type, setType] = useState<VehicleType>("car");
 
   const bulkCreate = () => {
     const n = Number(count);
@@ -28,22 +35,32 @@ function AdminParkingPage() {
       slotNumber: `${String.fromCharCode(64 + Number(floor))}${String(slots.length + i + 1).padStart(2, "0")}`,
       floor: Number(floor),
       status: "available" as const,
-      type: type as "car",
-      pricePerHour: 50,
+      type: type as any,
+      pricePerHour: type === "bike" ? 20 : type === "ev" ? 80 : type === "suv" ? 70 : 50,
       location: `Block ${String.fromCharCode(64 + Number(floor))}`,
+      ...(type === "ev" ? {
+        isEV: true,
+        chargerType: "AC Type-2",
+        chargingPower: "22kW",
+        chargingPricePerKwh: 18,
+        chargerStatus: "online" as const,
+      } : {}),
     }));
-    setSlots((prev) => [...prev, ...newSlots]);
+    store.setState({ slots: [...slots, ...newSlots] });
     toast.success(`${n} slots created on floor ${floor}`);
   };
 
   return (
     <AppShell admin>
-      <div className="mb-6">
+      <Suspense fallback={null}>
+        <SmartCityBackground />
+      </Suspense>
+      <div className="mb-6 relative z-10">
         <h1 className="font-display text-3xl font-bold tracking-tight">Manage parking</h1>
         <p className="text-muted-foreground mt-1">Add areas, floors and bulk-create slots.</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3 mb-6">
+      <div className="grid gap-6 lg:grid-cols-3 mb-6 relative z-10">
         <div className="glass rounded-2xl p-6">
           <div className="flex items-center gap-2 mb-4"><Building2 className="h-4 w-4 text-primary" /><span className="font-semibold">Parking area</span></div>
           <div className="space-y-3">
@@ -72,7 +89,7 @@ function AdminParkingPage() {
             </div>
             <div>
               <Label>Type</Label>
-              <Select value={type} onValueChange={setType}>
+              <Select value={type} onValueChange={(v) => setType(v as VehicleType)}>
                 <SelectTrigger className="h-11 bg-white/5 mt-2"><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="car">Car</SelectItem><SelectItem value="bike">Bike</SelectItem><SelectItem value="ev">EV</SelectItem><SelectItem value="suv">SUV</SelectItem></SelectContent>
               </Select>
@@ -83,7 +100,7 @@ function AdminParkingPage() {
         </div>
       </div>
 
-      <div className="glass rounded-2xl overflow-hidden">
+      <div className="glass rounded-2xl overflow-hidden relative z-10">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border/40">
           <div className="font-semibold">All slots · {slots.length}</div>
         </div>
@@ -100,17 +117,38 @@ function AdminParkingPage() {
               </tr>
             </thead>
             <tbody>
-              {slots.slice(0, 20).map((s) => (
+              {slots.map((s) => (
                 <tr key={s.id} className="border-t border-border/40 hover:bg-white/5">
                   <td className="py-3 px-4 font-semibold">{s.slotNumber}</td>
                   <td className="py-3 px-4">F{s.floor}</td>
-                  <td className="py-3 px-4 capitalize">{s.type}</td>
-                  <td className="py-3 px-4">₹{s.pricePerHour}/hr</td>
+                  <td className="py-3 px-4 capitalize">
+                    <div className="flex items-center gap-1.5">
+                      {s.type}
+                      {s.isEV && <Zap className="h-3 w-3 text-primary fill-primary" />}
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    ₹{s.pricePerHour}/hr
+                    {s.isEV && <div className="text-[10px] text-primary">₹{s.chargingPricePerKwh}/kWh</div>}
+                  </td>
                   <td className="py-3 px-4"><StatusBadge status={s.status} /></td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-1 justify-end">
+                      {s.isEV && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className={s.chargerStatus === "online" ? "text-success" : "text-destructive"}
+                          onClick={() => {
+                            store.updateSlot(s.id, { chargerStatus: s.chargerStatus === "online" ? "offline" : "online" });
+                            toast.success(`Charger ${s.chargerStatus === "online" ? "disabled" : "enabled"}`);
+                          }}
+                        >
+                          <Power className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button variant="ghost" size="icon" onClick={() => toast.success(`Editing ${s.slotNumber}`)}><Edit2 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => { setSlots((xs) => xs.filter((x) => x.id !== s.id)); toast.success("Slot removed"); }}><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => { store.deleteSlot(s.id); toast.success("Slot removed"); }}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </td>
                 </tr>

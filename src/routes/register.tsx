@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Controller } from "react-hook-form";
+import { auth } from "@/lib/auth";
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -38,10 +40,24 @@ function RegisterPage() {
     defaultValues: { name: "", email: "", phone: "", password: "", confirm: "", vehicleNumber: "", vehicleType: "car" },
   });
 
-  const onSubmit = async () => {
-    await new Promise((r) => setTimeout(r, 700));
-    toast.success("Account created — welcome to SmartPark");
-    navigate({ to: "/dashboard" });
+  const onSubmit = async (data: FormData) => {
+    try {
+      // In a real app, you'd pass data.name, phone, etc., to a profile update function
+      const success = await auth.register(data.email, data.password, "user", {
+        name: data.name,
+        phone: data.phone,
+        vehicleNumber: data.vehicleNumber,
+        vehicleType: data.vehicleType
+      });
+      if (success) {
+        toast.success("Account created — welcome to SmartPark");
+        navigate({ to: "/dashboard" });
+      } else {
+        toast.error("Failed to create account");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Failed to register");
+    }
   };
 
   return (
@@ -113,7 +129,7 @@ function RegisterPage() {
           {isSubmitting ? "Creating…" : "Create account"}
         </Button>
 
-        <p className="text-[11px] text-muted-foreground text-center">
+        <p className="text-[11px] text-muted-foreground text-center mt-2">
           By continuing, you agree to our Terms and Privacy Policy.
         </p>
       </form>

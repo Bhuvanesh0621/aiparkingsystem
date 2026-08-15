@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { redirect } from "@tanstack/react-router";
+import { auth } from "@/lib/auth";
 import { useMemo, useState } from "react";
 import { Search, Check, X, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -7,24 +9,31 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/app/status-badge";
-import { bookings } from "@/lib/mock-data";
+import { useStore, store } from "@/lib/store";
 
 export const Route = createFileRoute("/admin/bookings")({
-  head: () => ({ meta: [{ title: "Bookings — SmartPark AI" }] }),
+  head: () => ({ meta: [{ title: "All Bookings — Admin" }] }),
+  beforeLoad: async () => {
+    if (!(await auth.isAdmin())) throw redirect({ to: "/dashboard" });
+  },
   component: AdminBookingsPage,
 });
 
 function AdminBookingsPage() {
+  const { bookings, users } = useStore();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState("all");
-  const filtered = useMemo(() => bookings.filter((b) => {
-    if (status !== "all" && b.status !== status) return false;
-    if (q && !`${b.id} ${b.slotNumber} ${b.vehicleNumber}`.toLowerCase().includes(q.toLowerCase())) return false;
-    return true;
-  }), [q, status]);
+  const filtered = useMemo(() => {
+    const result = bookings.filter((b) => {
+      if (status !== "all" && b.status !== status) return false;
+      if (q && !`${b.id} ${b.slotNumber} ${b.vehicleNumber}`.toLowerCase().includes(q.toLowerCase())) return false;
+      return true;
+    });
+    return result.sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime());
+  }, [q, status, bookings]);
 
   return (
-    <AppShell admin>
+    <AppShell>
       <div className="mb-6">
         <h1 className="font-display text-3xl font-bold tracking-tight">Bookings</h1>
         <p className="text-muted-foreground mt-1">Approve, cancel and complete bookings across the network.</p>
@@ -52,7 +61,7 @@ function AdminBookingsPage() {
           <table className="w-full text-sm">
             <thead className="text-xs text-muted-foreground uppercase bg-white/5">
               <tr>
-                <th className="text-left font-medium py-3 px-4">Booking</th>
+                <th className="text-left font-medium py-3 px-4">User</th>
                 <th className="text-left font-medium py-3 px-4">Slot</th>
                 <th className="text-left font-medium py-3 px-4">Vehicle</th>
                 <th className="text-left font-medium py-3 px-4">When</th>
@@ -64,7 +73,10 @@ function AdminBookingsPage() {
             <tbody>
               {filtered.map((b) => (
                 <tr key={b.id} className="border-t border-border/40 hover:bg-white/5">
-                  <td className="py-3 px-4 font-mono text-xs">{b.id}</td>
+                  <td className="py-3 px-4">
+                    <div className="font-medium">{users.find(u => u.id === b.userId)?.name || "Unknown User"}</div>
+                    <div className="text-xs text-muted-foreground">{users.find(u => u.id === b.userId)?.email || b.userId}</div>
+                  </td>
                   <td className="py-3 px-4 font-semibold">{b.slotNumber} <span className="text-muted-foreground text-xs">· F{b.floor}</span></td>
                   <td className="py-3 px-4">{b.vehicleNumber}</td>
                   <td className="py-3 px-4 text-muted-foreground">{new Date(b.startTime).toLocaleString()}</td>
@@ -72,9 +84,9 @@ function AdminBookingsPage() {
                   <td className="py-3 px-4"><StatusBadge status={b.status} /></td>
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-1 justify-end">
-                      <Button variant="ghost" size="icon" onClick={() => toast.success("Approved")}><Check className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => toast.success("Completed")}><CheckCircle2 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => toast.success("Cancelled")}><X className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => { store.updateBooking(b.id, { status: "active" }); toast.success("Approved"); }}><Check className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => { store.updateBooking(b.id, { status: "completed" }); toast.success("Completed"); }}><CheckCircle2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => { store.updateBooking(b.id, { status: "cancelled" }); toast.success("Cancelled"); }}><X className="h-4 w-4" /></Button>
                     </div>
                   </td>
                 </tr>

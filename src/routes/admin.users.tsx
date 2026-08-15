@@ -1,4 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { redirect } from "@tanstack/react-router";
+import { auth } from "@/lib/auth";
 import { useMemo, useState } from "react";
 import { Search, Edit2, Trash2, ShieldOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -7,21 +9,25 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { StatusBadge } from "@/components/app/status-badge";
-import { adminUsers } from "@/lib/mock-data";
+import { useStore, store, User } from "@/lib/store";
 
 export const Route = createFileRoute("/admin/users")({
-  head: () => ({ meta: [{ title: "Users — SmartPark AI" }] }),
+  head: () => ({ meta: [{ title: "Manage Users — Admin" }] }),
+  beforeLoad: async () => {
+    if (!(await auth.isAdmin())) throw redirect({ to: "/dashboard" });
+  },
   component: AdminUsersPage,
 });
 
 function AdminUsersPage() {
+  const { users } = useStore();
   const [q, setQ] = useState("");
   const [role, setRole] = useState("all");
-  const filtered = useMemo(() => adminUsers.filter((u) => {
+  const filtered = useMemo(() => users.filter((u) => {
     if (role !== "all" && u.role !== role) return false;
     if (q && !`${u.name} ${u.email}`.toLowerCase().includes(q.toLowerCase())) return false;
     return true;
-  }), [q, role]);
+  }), [q, role, users]);
 
   return (
     <AppShell admin>
@@ -79,10 +85,17 @@ function AdminUsersPage() {
                   <td className="py-3 px-4">
                     <div className="flex items-center gap-1 justify-end">
                       <Button variant="ghost" size="icon" onClick={() => toast.success(`Editing ${u.name}`)}><Edit2 className="h-4 w-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => toast.success(`${u.name} ${u.status === "suspended" ? "reactivated" : "suspended"}`)}>
+                      <Button variant="ghost" size="icon" onClick={() => {
+                        const newStatus = u.status === "suspended" ? "active" : "suspended";
+                        store.setState({ users: store.getState().users.map((x) => x.id === u.id ? { ...x, status: newStatus as User["status"] } : x) });
+                        toast.success(`${u.name} ${newStatus}`);
+                      }}>
                         {u.status === "suspended" ? <ShieldCheck className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => toast.success(`${u.name} deleted`)}><Trash2 className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => {
+                        store.deleteUser(u.id);
+                        toast.success(`${u.name} deleted`);
+                      }}><Trash2 className="h-4 w-4" /></Button>
                     </div>
                   </td>
                 </tr>

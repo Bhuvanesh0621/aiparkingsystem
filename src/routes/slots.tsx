@@ -1,12 +1,13 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Search, Filter } from "lucide-react";
+import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+import { auth } from "@/lib/auth";
+import { useMemo, useState, useEffect } from "react";
+import { Search, Filter, Zap, Wrench, AlertCircle } from "lucide-react";
 import { AppShell } from "@/components/app/app-shell";
 import { SlotCard } from "@/components/app/slot-card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { parkingSlots, type ParkingSlot } from "@/lib/mock-data";
+import { useStore, ParkingSlot } from "@/lib/store";
 
 export const Route = createFileRoute("/slots")({
   head: () => ({
@@ -15,6 +16,9 @@ export const Route = createFileRoute("/slots")({
       { name: "description", content: "Live parking slot availability grid." },
     ],
   }),
+  beforeLoad: async () => {
+    if (!(await auth.isUser())) throw redirect({ to: (await auth.isAdmin()) ? "/admin" : "/login" });
+  },
   component: SlotsPage,
 });
 
@@ -24,8 +28,13 @@ function SlotsPage() {
   const [type, setType] = useState("all");
   const [availability, setAvailability] = useState("all");
   const [selected, setSelected] = useState<ParkingSlot | null>(null);
+  const { slots, equipment = [], incidents = [] } = useStore();
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    auth.isAdmin().then(setIsAdmin);
+  }, []);
 
-  const filtered = useMemo(() => parkingSlots.filter((s) => {
+  const filtered = useMemo(() => slots.filter((s) => {
     if (q && !s.slotNumber.toLowerCase().includes(q.toLowerCase())) return false;
     if (floor !== "all" && s.floor !== Number(floor)) return false;
     if (type !== "all" && s.type !== type) return false;
@@ -84,9 +93,21 @@ function SlotsPage() {
       </div>
 
       <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
-        {filtered.map((s, i) => (
-          <SlotCard key={s.id} slot={s} selected={selected?.id === s.id} onSelect={setSelected} index={i} />
-        ))}
+        {filtered.map((s, i) => {
+          const slotEq = equipment.find(e => e.location.includes(s.slotNumber));
+          const slotInc = incidents.find(inc => inc.slotNumber === s.slotNumber && inc.status !== "Resolved" && inc.status !== "Closed");
+          return (
+            <SlotCard 
+              key={s.id} 
+              slot={s} 
+              selected={selected?.id === s.id} 
+              onSelect={setSelected} 
+              index={i} 
+              equipmentHealth={isAdmin ? slotEq?.status : undefined}
+              incidentSeverity={slotInc?.severity}
+            />
+          );
+        })}
         {filtered.length === 0 && (
           <div className="col-span-full glass rounded-2xl p-10 text-center text-muted-foreground">
             No slots match your filters.
@@ -95,12 +116,25 @@ function SlotsPage() {
       </div>
 
       {selected && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 glass-strong rounded-2xl px-5 py-3 flex items-center gap-4 shadow-elegant">
-          <div className="text-sm">
-            <div className="font-semibold">Slot {selected.slotNumber} selected</div>
-            <div className="text-xs text-muted-foreground">Floor {selected.floor} · ₹{selected.pricePerHour}/hr</div>
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 glass-strong rounded-2xl px-5 py-3 flex flex-col sm:flex-row items-center gap-4 shadow-elegant w-[90%] sm:w-auto">
+          <div className="text-sm text-center sm:text-left flex-1">
+            <div className="font-semibold flex items-center justify-center sm:justify-start gap-1.5">
+              Slot {selected.slotNumber} selected
+              {selected.isEV && <span className="inline-flex items-center gap-1 rounded bg-primary/20 px-1.5 py-0.5 text-[10px] text-primary"><Zap className="h-3 w-3 fill-primary" /> EV</span>}
+              {isAdmin && equipment.find(e => e.location.includes(selected.slotNumber))?.status !== "Healthy" && (
+                <span className="inline-flex items-center gap-1 rounded bg-destructive/20 px-1.5 py-0.5 text-[10px] text-destructive"><AlertCircle className="h-3 w-3" /> Maintenance Required</span>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              Floor {selected.floor} · ₹{selected.pricePerHour}/hr
+              {selected.isEV && ` · ${selected.chargerType} (${selected.chargingPower}) at ₹${selected.chargingPricePerKwh}/kWh`}
+            </div>
           </div>
-          <Button asChild variant="hero" size="sm"><Link to="/booking">Continue</Link></Button>
+          {isAdmin ? (
+            <Button asChild variant="hero" size="sm" className="w-full sm:w-auto"><Link to="/admin/parking">Manage Slot</Link></Button>
+          ) : (
+            <Button asChild variant="hero" size="sm" className="w-full sm:w-auto"><Link to="/booking">Continue</Link></Button>
+          )}
         </div>
       )}
     </AppShell>

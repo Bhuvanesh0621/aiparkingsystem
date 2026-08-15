@@ -26,13 +26,22 @@ export function StatCard({ label, value, delta, positive = true, icon: Icon, acc
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.06, ease: "easeOut" }}
       whileHover={{ y: -3 }}
-      className="relative overflow-hidden rounded-2xl glass p-5 shadow-elegant"
+      className="relative overflow-hidden rounded-2xl glass p-5 shadow-elegant h-fit"
     >
       <div className={cn("absolute -top-10 -right-10 h-32 w-32 rounded-full bg-gradient-to-br blur-2xl opacity-60", accents[accent])} />
       <div className="relative flex items-start justify-between">
         <div>
           <div className="text-xs uppercase tracking-wider text-muted-foreground font-medium">{label}</div>
-          <div className="mt-2 text-3xl font-bold tracking-tight">{value}</div>
+          <div className="mt-2 text-3xl font-bold tracking-tight">
+            <motion.span
+              key={value}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="inline-block"
+            >
+              {value}
+            </motion.span>
+          </div>
           {delta && (
             <div className={cn("mt-2 text-xs font-medium", positive ? "text-success" : "text-destructive")}>
               {positive ? "▲" : "▼"} {delta}

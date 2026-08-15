@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { Link } from "@tanstack/react-router";
 import {
@@ -13,7 +13,20 @@ import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
 } from "@/components/ui/accordion";
 
+import { auth } from "@/lib/auth";
+
 export const Route = createFileRoute("/")({
+  beforeLoad: async () => {
+    if ((await auth.isAuthenticated())) {
+      throw redirect({
+        to: (await auth.isAdmin()) ? '/admin' : '/dashboard',
+      })
+    } else {
+      throw redirect({
+        to: '/login',
+      })
+    }
+  },
   component: LandingPage,
 });
 
@@ -51,6 +64,31 @@ function LandingPage() {
     <div className="relative min-h-screen bg-background text-foreground overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-30 pointer-events-none" />
       <div className="absolute inset-x-0 top-0 h-[900px] bg-hero pointer-events-none" />
+      
+      {/* Neomorphic Minimalist Car Background */}
+      <div className="absolute top-32 right-[-30%] md:right-[-10%] opacity-[0.05] md:opacity-[0.07] pointer-events-none w-[1000px] md:w-[1400px] text-primary rotate-[-2deg]">
+        <svg viewBox="0 0 1000 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* Sleek aerodynamic silhouette */}
+          <path d="M 80 250 Q 150 230 220 210 Q 320 130 480 120 Q 650 120 780 190 Q 880 230 920 250" stroke="url(#gradient)" strokeWidth="6" strokeLinecap="round" />
+          {/* Ground line */}
+          <path d="M 40 250 L 960 250" stroke="url(#gradient)" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+          {/* Wheels */}
+          <circle cx="260" cy="250" r="55" stroke="currentColor" strokeWidth="6" />
+          <circle cx="260" cy="250" r="25" stroke="currentColor" strokeWidth="2" opacity="0.5" />
+          <circle cx="740" cy="250" r="55" stroke="currentColor" strokeWidth="6" />
+          <circle cx="740" cy="250" r="25" stroke="currentColor" strokeWidth="2" opacity="0.5" />
+          {/* Speed / motion lines */}
+          <path d="M 10 180 L 120 180" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.3"/>
+          <path d="M -20 220 L 80 220" stroke="currentColor" strokeWidth="3" strokeLinecap="round" opacity="0.2"/>
+          
+          <defs>
+            <linearGradient id="gradient" x1="0" y1="0" x2="1000" y2="0" gradientUnits="userSpaceOnUse">
+              <stop stopColor="currentColor" />
+              <stop offset="1" stopColor="var(--secondary)" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
       <FloatingNav />
 
       {/* Hero */}
@@ -173,9 +211,9 @@ function LandingPage() {
               viewport={{ once: true, margin: "-60px" }}
               transition={{ duration: 0.5, delay: i * 0.05 }}
               whileHover={{ y: -4 }}
-              className="glass rounded-2xl p-6 shadow-elegant"
+              className="group glass rounded-2xl p-6 shadow-elegant hover:shadow-glow transition-all duration-300"
             >
-              <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/15 border border-primary/30 text-primary">
+              <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/15 border border-primary/30 text-primary group-hover:scale-110 group-hover:bg-primary/20 transition-transform duration-300">
                 <f.icon className="h-5 w-5" />
               </div>
               <div className="mt-4 font-semibold text-lg">{f.title}</div>
@@ -200,10 +238,10 @@ function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: i * 0.08 }}
-              className="relative glass rounded-2xl p-6"
+              className="group relative glass rounded-2xl p-6 hover:shadow-glow transition-all duration-300"
             >
-              <div className="text-5xl font-bold gradient-text opacity-70">{s.n}</div>
-              <div className="mt-2 text-lg font-semibold">{s.t}</div>
+              <div className="text-5xl font-bold gradient-text opacity-70 group-hover:opacity-100 transition-opacity duration-300">{s.n}</div>
+              <div className="mt-2 text-lg font-semibold group-hover:text-primary transition-colors">{s.t}</div>
               <div className="mt-1 text-sm text-muted-foreground">{s.d}</div>
             </motion.div>
           ))}
