@@ -69,7 +69,7 @@ export function SOSButton() {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-24 right-6 z-50 md:bottom-6"
+            className="fixed bottom-20 right-4 z-50 md:bottom-6 md:right-6"
           >
             <button
               onClick={() => setOpen(true)}

@@ -69,11 +69,16 @@ export const auth = {
     return { success: true, realRole: profile?.role as Role };
   },
 
-  register: async (email: string, password?: string, role: Role = "user", profileData?: any): Promise<{ success: boolean; error?: string }> => {
+  register: async (email: string, password?: string, role: Role = "user", profileData?: any): Promise<{ success: boolean; error?: string; needsVerification?: boolean }> => {
     if (!password) return { success: false, error: "Password is required" };
 
+    const generateId = () => {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+      return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    };
+
     const vehicles = profileData?.vehicleNumber ? [
-      { id: crypto.randomUUID(), plateNumber: profileData.vehicleNumber, type: profileData.vehicleType || "car", model: "Registered Vehicle" }
+      { id: generateId(), plateNumber: profileData.vehicleNumber, type: profileData.vehicleType || "car", model: "Registered Vehicle" }
     ] : [];
 
     const { data, error } = await supabase.auth.signUp({
@@ -93,7 +98,7 @@ export const auth = {
       return { success: false, error: error.message };
     }
 
-    return { success: true };
+    return { success: true, needsVerification: !data.session };
   },
 
   logout: async () => {

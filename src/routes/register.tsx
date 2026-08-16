@@ -43,17 +43,22 @@ function RegisterPage() {
   const onSubmit = async (data: FormData) => {
     try {
       // In a real app, you'd pass data.name, phone, etc., to a profile update function
-      const success = await auth.register(data.email, data.password, "user", {
+      const result = await auth.register(data.email, data.password, "user", {
         name: data.name,
         phone: data.phone,
         vehicleNumber: data.vehicleNumber,
         vehicleType: data.vehicleType
       });
-      if (success) {
-        toast.success("Account created — welcome to SmartPark");
-        navigate({ to: "/dashboard" });
+      if (result.success) {
+        if (result.needsVerification) {
+          toast.success("Account created! Please check your email to verify your account.");
+          navigate({ to: "/login" });
+        } else {
+          toast.success("Account created — welcome to SmartPark");
+          navigate({ to: "/dashboard" });
+        }
       } else {
-        toast.error("Failed to create account");
+        toast.error(result.error || "Failed to create account");
       }
     } catch (e: any) {
       toast.error(e.message || "Failed to register");

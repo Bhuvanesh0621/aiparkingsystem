@@ -286,7 +286,7 @@ export function AIChatbot() {
       {!isOpen && (
         <Button
           onClick={handleOpen}
-          className="fixed bottom-[7.5rem] right-6 h-14 w-14 rounded-full shadow-glow bg-[linear-gradient(135deg,var(--primary),var(--secondary))] hover:scale-105 transition-transform z-50 p-0 md:bottom-28"
+          className="fixed bottom-[8.5rem] right-4 h-14 w-14 rounded-full shadow-glow bg-[linear-gradient(135deg,var(--primary),var(--secondary))] hover:scale-105 transition-transform z-50 p-0 md:bottom-28 md:right-6"
         >
           <Sparkles className="h-6 w-6 text-white" />
         </Button>
