@@ -90,7 +90,15 @@ export function AIChatbot() {
     };
 
     try {
-      const apiUrl = `${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/chat`;
+      const getBaseUrl = () => {
+        if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
+        if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+          return `http://${window.location.hostname}:3001`;
+        }
+        return "http://localhost:3001";
+      };
+      
+      const apiUrl = `${getBaseUrl()}/api/chat`;
 
       const response = await fetch(apiUrl, {
         method: "POST",
