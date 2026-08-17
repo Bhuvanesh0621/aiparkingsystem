@@ -437,6 +437,12 @@ export const store = {
     
     await store.refreshData();
 
+    // Add polling fallback every 10 seconds to ensure data stays perfectly synchronized across Admin and User pages
+    // even if Supabase Realtime (postgres_changes) is not manually enabled in the Supabase Dashboard.
+    setInterval(() => {
+      store.refreshData();
+    }, 10000);
+
     // Setup Real-time subscriptions
       if (api.subscribeToAll) {
         api.subscribeToAll((table: string, eventType: string, newRecord: any, oldRecord: any) => {
