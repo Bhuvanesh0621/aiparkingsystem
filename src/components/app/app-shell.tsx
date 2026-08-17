@@ -11,7 +11,6 @@ import { RealtimeClock } from "@/components/app/realtime-clock";
 import { SOSButton } from "@/components/app/sos-button";
 import { NotificationsPanel } from "@/components/app/notifications-panel";
 import { TicketModal } from "@/components/app/ticket-modal";
-import { AIChatbot } from "@/components/app/ai-chatbot";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { auth } from "@/lib/auth";
@@ -137,7 +136,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           {children}
         </main>
       </div>
-      <AIChatbot />
       <SOSButton />
       <TicketModal />
     </div>
