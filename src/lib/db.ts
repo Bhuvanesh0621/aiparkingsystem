@@ -31,6 +31,10 @@ const toSnake = (o: any) => {
   return n;
 };
 
+// Global channel for instant manual syncing between clients
+const syncChannel = supabase.channel('global-sync-channel');
+let isSyncSubscribed = false;
+
 export const api = {
   async fetchAllData() {
     const [
@@ -72,33 +76,38 @@ export const api = {
   async insert(table: string, data: any) {
     const { data: result, error } = await supabase.from(table).insert(toSnake(data)).select().single();
     if (error) throw error;
+    syncChannel.send({ type: 'broadcast', event: 'data_changed', payload: { table } }).catch(() => {});
     return toCamel(result);
   },
 
   async update(table: string, id: string, data: any) {
     const { data: result, error } = await supabase.from(table).update(toSnake(data)).eq('id', id).select().single();
     if (error) throw error;
+    syncChannel.send({ type: 'broadcast', event: 'data_changed', payload: { table } }).catch(() => {});
     return toCamel(result);
   },
   
   async updateBy(table: string, column: string, value: string, data: any) {
     const { data: result, error } = await supabase.from(table).update(toSnake(data)).eq(toSnake(column), value).select().single();
     if (error) throw error;
+    syncChannel.send({ type: 'broadcast', event: 'data_changed', payload: { table } }).catch(() => {});
     return toCamel(result);
   },
 
   async delete(table: string, id: string) {
     const { error } = await supabase.from(table).delete().eq('id', id);
     if (error) throw error;
+    syncChannel.send({ type: 'broadcast', event: 'data_changed', payload: { table } }).catch(() => {});
   },
 
   async createBookingAtomic(params: any) {
     const { data: result, error } = await supabase.rpc('create_booking_atomic', toSnake(params));
     if (error) throw error;
+    syncChannel.send({ type: 'broadcast', event: 'data_changed', payload: { table: 'bookings' } }).catch(() => {});
     return toCamel(result);
   },
 
-  subscribeToAll(callback: (table: string, eventType: string, newRecord: any, oldRecord: any) => void) {
+  subscribeToAll(callback: (table: string, eventType: string, newRecord: any, oldRecord: any) => void, onSync?: () => void) {
     const channel = supabase.channel('custom-all-channel');
     
     channel.on(
@@ -124,5 +133,14 @@ export const api = {
         }, 5000);
       }
     });
+    
+    // Subscribe to manual broadcast sync signals (instant cross-client sync)
+    if (!isSyncSubscribed) {
+      syncChannel.on('broadcast', { event: 'data_changed' }, (payload) => {
+        console.log("🔄 Instant Broadcast Sync Received", payload);
+        if (onSync) onSync();
+      }).subscribe();
+      isSyncSubscribed = true;
+    }
   }
 };

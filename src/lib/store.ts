@@ -498,6 +498,9 @@ export const store = {
           }
           
           store.setState({ [stateKey]: list });
+        }, () => {
+          // Instant Broadcast Sync Handler
+          store.refreshData();
         });
       }
       
