@@ -611,6 +611,9 @@ export const store = {
         p_payment_method: booking.paymentMethod || 'card'
       });
 
+      // Explicitly update the slot status in the database to ensure it persists
+      await api.update("parking_slots", slotId, { status });
+
       // Also insert services if any (not part of atomic booking RPC for now)
       if (booking.services) {
         for (const srv of booking.services) {
