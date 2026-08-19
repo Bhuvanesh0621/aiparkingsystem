@@ -74,24 +74,24 @@ export const api = {
   },
 
   async insert(table: string, data: any) {
-    const { data: result, error } = await supabase.from(table).insert(toSnake(data)).select().single();
+    const { data: result, error } = await supabase.from(table).insert(toSnake(data)).select();
     if (error) throw error;
     syncChannel.send({ type: 'broadcast', event: 'data_changed', payload: { table } }).catch(() => {});
-    return toCamel(result);
+    return result && result.length > 0 ? toCamel(result[0]) : null;
   },
 
   async update(table: string, id: string, data: any) {
-    const { data: result, error } = await supabase.from(table).update(toSnake(data)).eq('id', id).select().single();
+    const { data: result, error } = await supabase.from(table).update(toSnake(data)).eq('id', id).select();
     if (error) throw error;
     syncChannel.send({ type: 'broadcast', event: 'data_changed', payload: { table } }).catch(() => {});
-    return toCamel(result);
+    return result && result.length > 0 ? toCamel(result[0]) : null;
   },
   
   async updateBy(table: string, column: string, value: string, data: any) {
-    const { data: result, error } = await supabase.from(table).update(toSnake(data)).eq(toSnake(column), value).select().single();
+    const { data: result, error } = await supabase.from(table).update(toSnake(data)).eq(toSnake(column), value).select();
     if (error) throw error;
     syncChannel.send({ type: 'broadcast', event: 'data_changed', payload: { table } }).catch(() => {});
-    return toCamel(result);
+    return result && result.length > 0 ? toCamel(result[0]) : null;
   },
 
   async delete(table: string, id: string) {
