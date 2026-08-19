@@ -45,7 +45,9 @@ function BookingPage() {
   const [vehicleNumber, setVehicleNumber] = useState("");
   const [vehicleType, setVehicleType] = useState("car");
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [time, setTime] = useState("10:00");
+  // Default to the current real-time hour (e.g. 14:00)
+  const currentHourStr = new Date().getHours().toString().padStart(2, '0') + ":00";
+  const [time, setTime] = useState(currentHourStr);
   const [duration, setDuration] = useState("2");
   const [slot, setSlot] = useState("A03");
   const [payment, setPayment] = useState("card");
@@ -116,14 +118,19 @@ function BookingPage() {
       toast.error("Please select a slot");
       return;
     }
+    // Correctly parse local date/time into proper UTC ISO strings for database
+    const localDateTimeString = `${date}T${time}:00`;
+    const startObj = new Date(localDateTimeString);
+    const endObj = new Date(startObj.getTime() + Number(duration) * 60 * 60 * 1000);
+
     const newBooking = {
       id: crypto.randomUUID(),
       slotNumber: slot,
       floor: selectedSlotDetails.floor,
       vehicleNumber,
       vehicleType: vehicleType as VehicleType,
-      startTime: `${date}T${time}:00.000Z`,
-      endTime: `${date}T${time}:00.000Z`,
+      startTime: startObj.toISOString(),
+      endTime: endObj.toISOString(),
       amount: finalPrice,
       status: "active" as const,
       paymentStatus: "paid" as const,
