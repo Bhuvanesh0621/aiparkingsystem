@@ -260,7 +260,7 @@ function AdminPage() {
             <table className="w-full text-sm">
               <thead className="text-xs text-muted-foreground uppercase bg-white/5">
                 <tr>
-                  <th className="text-left font-medium py-3 px-4">Booking ID</th>
+                  <th className="text-left font-medium py-3 px-4">Customer Details</th>
                   <th className="text-left font-medium py-3 px-4">Service</th>
                   <th className="text-left font-medium py-3 px-4">Category</th>
                   <th className="text-left font-medium py-3 px-4">Status</th>
@@ -268,9 +268,25 @@ function AdminPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/40">
-                {activeServiceRequests.map((req) => (
+                {activeServiceRequests.map((req) => {
+                  const booking = bookings.find(b => b.id === req.bookingId);
+                  const user = users.find(u => u.id === booking?.userId);
+                  return (
                   <tr key={req.id} className="hover:bg-white/5">
-                    <td className="py-3 px-4 font-mono text-xs">{req.bookingId}</td>
+                    <td className="py-3 px-4">
+                      {booking ? (
+                        <div className="flex flex-col">
+                          <span className="font-semibold">{user?.name || "Guest"}</span>
+                          <span className="text-xs text-muted-foreground">{user?.phone || user?.email || "No contact"}</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded font-mono">{booking.vehicleNumber}</span>
+                            <span className="text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded">Bay {booking.slotNumber}</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground font-mono">{req.bookingId.split('-')[0]}...</span>
+                      )}
+                    </td>
                     <td className="py-3 px-4 font-semibold">{req.name}</td>
                     <td className="py-3 px-4 text-muted-foreground">{req.category}</td>
                     <td className="py-3 px-4">
@@ -296,7 +312,8 @@ function AdminPage() {
                        )}
                     </td>
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
           </div>
