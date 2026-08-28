@@ -233,6 +233,16 @@ function BookingPage() {
       if (currentUser) {
         store.addRewardPoints(currentUser.id, data.earnedPoints);
       }
+      
+      store.addNotification({
+        title: "Booking Confirmed \u2705",
+        message: `Your bay ${data.booking.slotNumber} is secured for ${date} at ${time}. ${data.booking.services?.length ? `Your ${data.booking.services.length} extra services are scheduled.` : ""}`,
+        category: "Booking",
+        priority: "High",
+        actionLabel: "View Receipt",
+        actionLink: "/history"
+      });
+
       setOpen(true); // Open the success receipt dialog
       toast.success(`Booking confirmed! You earned ${data.earnedPoints} Eco-Rewards!`);
     } catch (err: any) {
