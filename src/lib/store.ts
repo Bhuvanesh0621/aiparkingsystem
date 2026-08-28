@@ -418,13 +418,16 @@ export const store = {
       if (data.users && data.users.length > 0) {
         const currentUsers = store.getState().users;
         parsed.users = data.users.map((dbUser: any) => {
-           const existing = currentUsers.find((u: any) => u.id === dbUser.id) || {};
+           const existing = currentUsers.find((u: any) => u.id === dbUser.id);
+           if (!existing) return dbUser;
+           
+           // Always trust local state for these fields because Supabase RLS often blocks UPDATEs to them
+           // causing the DB to return stale data (0) and wipe out our optimistic UI updates.
            return {
-             ...existing,
              ...dbUser,
-             walletBalance: dbUser.walletBalance !== undefined ? dbUser.walletBalance : (existing.walletBalance || 0),
-             rewardPoints: dbUser.rewardPoints !== undefined ? dbUser.rewardPoints : (existing.rewardPoints || 0),
-             vehicles: dbUser.vehicles && dbUser.vehicles.length > 0 ? dbUser.vehicles : (existing.vehicles || [])
+             walletBalance: existing.walletBalance !== undefined ? existing.walletBalance : dbUser.walletBalance,
+             rewardPoints: existing.rewardPoints !== undefined ? existing.rewardPoints : dbUser.rewardPoints,
+             vehicles: existing.vehicles && existing.vehicles.length > 0 ? existing.vehicles : dbUser.vehicles
            };
         });
       }
