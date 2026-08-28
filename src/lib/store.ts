@@ -415,7 +415,19 @@ export const store = {
       // Preserve current user ID
       parsed.currentUserId = store.getState().currentUserId;
       
-      if (data.users && data.users.length > 0) parsed.users = data.users;
+      if (data.users && data.users.length > 0) {
+        const currentUsers = store.getState().users;
+        parsed.users = data.users.map((dbUser: any) => {
+           const existing = currentUsers.find((u: any) => u.id === dbUser.id) || {};
+           return {
+             ...existing,
+             ...dbUser,
+             walletBalance: dbUser.walletBalance !== undefined ? dbUser.walletBalance : (existing.walletBalance || 0),
+             rewardPoints: dbUser.rewardPoints !== undefined ? dbUser.rewardPoints : (existing.rewardPoints || 0),
+             vehicles: dbUser.vehicles && dbUser.vehicles.length > 0 ? dbUser.vehicles : (existing.vehicles || [])
+           };
+        });
+      }
       if (data.slots && data.slots.length > 0) parsed.slots = data.slots;
       if (data.bookings && data.bookings.length > 0) parsed.bookings = data.bookings.map(b => enrichBookingWithEVDetails(b, parsed.slots || []));
       if (data.incidents && data.incidents.length > 0) parsed.incidents = data.incidents;
