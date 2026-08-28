@@ -964,19 +964,28 @@ export const store = {
   },
   updateCarServiceStatus: (id: string, status: CarServiceStatus, staff?: string) => {
     const service = currentState.serviceRequests.find(s => s.id === id);
+    const updates = {
+      status,
+      ...(staff ? { assignedStaff: staff } : {}),
+      ...(status === 'completed' ? { completedAt: new Date().toISOString() } : {})
+    };
+    
+    // Optimistic UI update
     store.setState({
       serviceRequests: currentState.serviceRequests.map(s => {
         if (s.id === id) {
-          return {
-            ...s,
-            status,
-            ...(staff ? { assignedStaff: staff } : {}),
-            ...(status === 'completed' ? { completedAt: new Date().toISOString() } : {})
-          };
+          return { ...s, ...updates };
         }
         return s;
       })
     });
+    
+    // Persist to database
+    if (!id.startsWith("TEMP-")) {
+      api.update("service_requests", id, updates).catch(err => {
+        console.error("Failed to update service request status:", err);
+      });
+    }
 
     if (!service) return;
 
