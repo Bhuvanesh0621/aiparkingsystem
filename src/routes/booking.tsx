@@ -103,7 +103,12 @@ function BookingPage() {
   const chargingHours = Math.min(Number(duration), 4); // assume max 4 hours needed
   const chargingCost = selectedSlotDetails?.isEV && vehicleType === "ev" ? Math.round(chargingHours * 7 * (selectedSlotDetails.chargingPricePerKwh || 18)) : 0; // 7kW avg
 
-  const validServices = availableServices.filter(s => s.isActive && s.vehicleTypes.includes(vehicleType as VehicleType));
+  const validServices = availableServices.filter(s => {
+    if (!s.isActive) return false;
+    if (!s.vehicleTypes || s.vehicleTypes.length === 0) return false;
+    const safeVehicleType = (vehicleType || '').toLowerCase().trim();
+    return s.vehicleTypes.map(v => (v || '').toLowerCase().trim()).includes(safeVehicleType);
+  });
   const selectedServices = validServices.filter(s => selectedServiceIds.includes(s.id));
   const servicesCost = selectedServices.reduce((acc, s) => acc + s.price, 0);
 
@@ -368,7 +373,11 @@ function BookingPage() {
               <span className="text-xs text-muted-foreground">Optional</span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {validServices.map((srv) => {
+              {validServices.length === 0 ? (
+                <div className="col-span-full text-xs text-muted-foreground p-3 border border-dashed rounded-xl bg-white/5">
+                  No additional services available for this vehicle type.
+                </div>
+              ) : validServices.map((srv) => {
                 const isSelected = selectedServiceIds.includes(srv.id);
                 return (
                   <button
