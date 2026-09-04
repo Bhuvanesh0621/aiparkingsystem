@@ -13,6 +13,7 @@ import { StatusBadge } from "@/components/app/status-badge";
 import { useStore, store, ParkingSlot, VehicleType, SlotStatus } from "@/lib/store";
 
 const SmartCityBackground = lazy(() => import("@/components/admin/smart-city-background"));
+const DigitalTwinDashboard = lazy(() => import("@/components/admin/digital-twin-dashboard"));
 
 export const Route = createFileRoute("/admin/parking")({
   head: () => ({ meta: [{ title: "Manage Parking — Admin" }] }),
@@ -98,6 +99,12 @@ function AdminParkingPage() {
             <Button variant="hero" className="w-full" onClick={bulkCreate}><Plus className="h-4 w-4" /> Create {count} slots</Button>
           </div>
         </div>
+      </div>
+
+      <div className="mb-6 relative z-10">
+        <Suspense fallback={<div className="h-[600px] w-full rounded-3xl bg-white/5 animate-pulse flex items-center justify-center">Loading 3D Twin...</div>}>
+          <DigitalTwinDashboard />
+        </Suspense>
       </div>
 
       <div className="glass rounded-2xl overflow-hidden relative z-10">
