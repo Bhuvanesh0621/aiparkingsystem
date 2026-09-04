@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useStore, useStats, useDashboardStats, store } from "@/lib/store";
 import { ReportIncidentModal } from "@/components/app/report-incident-modal";
-import { FindMyCarModal } from "@/components/app/find-my-car-modal";
+import { ARNavigation } from "@/components/app/ar-navigation";
 import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/dashboard")({
@@ -86,9 +86,9 @@ function DashboardPage() {
               </div>
               <h2 className="text-2xl font-bold tracking-tight mb-1">Slot {activeBooking.slotNumber} · F{activeBooking.floor}</h2>
               <p className="text-muted-foreground mb-4">{activeBooking.vehicleNumber} · Since {new Date(activeBooking.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-              <Button variant="hero" onClick={() => setIsFindMyCarOpen(true)} className="gap-2 shadow-glow">
+              <Button variant="hero" onClick={() => setIsFindMyCarOpen(true)} className="gap-2 shadow-glow bg-blue-600 hover:bg-blue-700 text-white">
                 <MapPin className="h-4 w-4" />
-                Find My Car
+                Live AR Navigation
               </Button>
             </div>
             
@@ -269,12 +269,10 @@ function DashboardPage() {
       </div>
       </div>
       <ReportIncidentModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} defaultSlotNumber={activeBooking?.slotNumber} />
-      {activeBooking && (
-        <FindMyCarModal 
-          isOpen={isFindMyCarOpen} 
-          onClose={() => setIsFindMyCarOpen(false)} 
+      {activeBooking && isFindMyCarOpen && (
+        <ARNavigation 
           slotNumber={activeBooking.slotNumber} 
-          floor={activeBooking.floor} 
+          onClose={() => setIsFindMyCarOpen(false)} 
         />
       )}
     </AppShell>
