@@ -355,7 +355,17 @@ function emitChange() {
 }
 
 function enrichBookingWithEVDetails(booking: any, slots: any[]): any {
-  const isEVSlot = slots?.find((s: any) => s.slotNumber === booking.slotNumber)?.isEV;
+  // Database returns slotId instead of slotNumber, resolve it here if missing
+  let slotNumber = booking.slotNumber;
+  if (!slotNumber && booking.slotId) {
+    const slot = slots?.find((s: any) => s.id === booking.slotId);
+    if (slot) {
+      slotNumber = slot.slotNumber;
+      booking.slotNumber = slotNumber; // Mutate to ensure it's available in UI
+    }
+  }
+
+  const isEVSlot = slots?.find((s: any) => s.slotNumber === slotNumber)?.isEV;
   
   if ((booking.vehicleType !== "ev" && !isEVSlot) || booking.status !== "active") {
     return booking;
