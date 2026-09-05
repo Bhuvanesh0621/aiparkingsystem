@@ -95,6 +95,12 @@ export const auth = {
 
     if (error) {
       console.error("Registration failed:", error.message);
+      if (error.message.toLowerCase().includes("rate limit") || error.message.toLowerCase().includes("email limit")) {
+        return { 
+          success: false, 
+          error: "Supabase Email Limit Exceeded! For testing, go to your Supabase Dashboard -> Authentication -> Providers -> Email -> Turn OFF 'Confirm email'." 
+        };
+      }
       return { success: false, error: error.message };
     }
 
