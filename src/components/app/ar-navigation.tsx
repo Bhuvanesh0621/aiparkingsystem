@@ -175,7 +175,7 @@ export function ARNavigation({ slotNumber, onClose }: ARNavigationProps) {
         {/* Navigation Instructions */}
         <div className="bg-black/80 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-2xl pointer-events-auto transform transition-all">
           <div className="flex items-center gap-4 mb-4">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center \${distance === 0 ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'}`}>
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${distance === 0 ? 'bg-green-500/20 text-green-400' : 'bg-blue-500/20 text-blue-400'}`}>
               {distance === 0 ? <MapPin className="h-6 w-6" /> : <Navigation2 className="h-6 w-6" />}
             </div>
             <div>
