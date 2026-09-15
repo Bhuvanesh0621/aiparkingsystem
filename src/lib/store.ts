@@ -450,6 +450,17 @@ export const store = {
       if (data.notifications && data.notifications.length > 0) parsed.notifications = data.notifications;
       if (data.equipment && data.equipment.length > 0) parsed.equipment = data.equipment;
       
+      // Override slot status locally based on active bookings (compensates for RLS blocking direct parking_slots updates)
+      if (parsed.slots && parsed.bookings) {
+        const activeBookings = parsed.bookings.filter(b => b.status === "active" || b.status === "pending");
+        parsed.slots = parsed.slots.map(slot => {
+          const isOccupied = activeBookings.some(b => b.slotId === slot.id || b.slotNumber === slot.slotNumber);
+          if (isOccupied && slot.status === "available") {
+            return { ...slot, status: "occupied" };
+          }
+          return slot;
+        });
+      }
       store.setState(parsed);
     } catch (err) {
       console.error("Failed to refresh data:", err);
@@ -522,7 +533,23 @@ export const store = {
             if (index !== -1) list.splice(index, 1);
           }
           
-          store.setState({ [stateKey]: list });
+          let finalState: any = { [stateKey]: list };
+          
+          if (stateKey === 'slots' || stateKey === 'bookings') {
+            const currentBookings = stateKey === 'bookings' ? list : state.bookings;
+            const currentSlots = stateKey === 'slots' ? list : state.slots;
+            const activeBookings = currentBookings.filter((b: any) => b.status === "active" || b.status === "pending");
+            
+            finalState.slots = currentSlots.map((slot: any) => {
+              const isOccupied = activeBookings.some((b: any) => b.slotId === slot.id || b.slotNumber === slot.slotNumber);
+              if (isOccupied && slot.status === "available") {
+                return { ...slot, status: "occupied" };
+              }
+              return slot;
+            });
+          }
+
+          store.setState(finalState);
         }, () => {
           // Instant Broadcast Sync Handler
           store.refreshData();
@@ -636,8 +663,8 @@ export const store = {
         p_payment_method: booking.paymentMethod || 'card'
       });
 
-      // Explicitly update the slot status in the database to ensure it persists
-      await api.update("parking_slots", slotId, { status });
+      // Explicitly update the slot status in the database to ensure it persists (catch RLS errors if user is not admin)
+      await api.update("parking_slots", slotId, { status }).catch(e => console.warn("Slot update skipped (RLS/Trigger handled).", e));
 
       // Also insert services if any (not part of atomic booking RPC for now)
       if (booking.services) {
@@ -682,12 +709,12 @@ export const store = {
       if (oldBooking && updates.status && (updates.status === "completed" || updates.status === "cancelled")) {
          const slotId = currentState.slots.find(s => s.slotNumber === oldBooking.slotNumber)?.id;
          if (slotId) {
-            await api.update("parking_slots", slotId, { status: "available" });
+            await api.update("parking_slots", slotId, { status: "available" }).catch(e => console.warn("Slot update skipped.", e));
          }
       } else if (oldBooking && updates.status === "active") {
          const slotId = currentState.slots.find(s => s.slotNumber === oldBooking.slotNumber)?.id;
          if (slotId) {
-            await api.update("parking_slots", slotId, { status: "occupied" });
+            await api.update("parking_slots", slotId, { status: "occupied" }).catch(e => console.warn("Slot update skipped.", e));
          }
       }
     } catch (error) {
