@@ -355,13 +355,15 @@ function emitChange() {
 }
 
 function enrichBookingWithEVDetails(booking: any, slots: any[]): any {
-  // Database returns slotId instead of slotNumber, resolve it here if missing
+  // Always derive the slotNumber from the slots array based on slotId 
+  // This prevents the bug where the DB RPC might return slot_id ('S-7') as the slot_number, 
+  // causing the UI to optimistically show 'A07' but then automatically change to 'S-7' after sync.
   let slotNumber = booking.slotNumber;
-  if (!slotNumber && booking.slotId) {
+  if (booking.slotId) {
     const slot = slots?.find((s: any) => s.id === booking.slotId);
     if (slot) {
       slotNumber = slot.slotNumber;
-      booking.slotNumber = slotNumber; // Mutate to ensure it's available in UI
+      booking.slotNumber = slotNumber; // Force mutate to ensure correct UI
     }
   }
 
