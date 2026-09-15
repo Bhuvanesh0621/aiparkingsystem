@@ -49,7 +49,7 @@ function BookingPage() {
   const currentHourStr = new Date().getHours().toString().padStart(2, '0') + ":00";
   const [time, setTime] = useState(currentHourStr);
   const [duration, setDuration] = useState("2");
-  const [slot, setSlot] = useState("A03");
+  const [slot, setSlot] = useState("");
   const [payment, setPayment] = useState("card");
   const [open, setOpen] = useState(false);
   const [earnedPointsDisplay, setEarnedPointsDisplay] = useState(0);
