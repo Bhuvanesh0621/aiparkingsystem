@@ -135,6 +135,8 @@ export function NotificationsPanel() {
                               store.markNotificationAsRead(notif.id);
                               if (notif.actionLabel === "View Ticket" && notif.actionData) {
                                 store.openTicket(notif.actionData);
+                              } else if (notif.actionLabel?.includes("Extend 30m") && notif.actionData) {
+                                (store.getState() as any).extendBooking(notif.actionData, 30, 10);
                               }
                            }}>
                              {notif.actionLabel}

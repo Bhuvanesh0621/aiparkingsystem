@@ -50,6 +50,7 @@ export interface CarServiceRequest {
 
 export interface Booking {
   id: string;
+  slotId?: string;
   slotNumber: string;
   floor: number;
   vehicleNumber: string;
@@ -89,6 +90,7 @@ export interface User {
   role: "user" | "admin";
   status: "active" | "suspended";
   joined: string;
+  createdAt?: string;
   phone?: string;
   walletBalance: number;
   rewardPoints: number;
@@ -416,7 +418,7 @@ export const store = {
   closeTicket: () => store.setState({ activeTicketBookingId: null }),
   subscribe: (listener: () => void) => {
     listeners.add(listener);
-    return () => listeners.delete(listener);
+    return () => { listeners.delete(listener); };
   },
   
   refreshData: async () => {
@@ -454,7 +456,7 @@ export const store = {
       
       // Override slot status locally based on active bookings (compensates for RLS blocking direct parking_slots updates)
       if (parsed.slots && parsed.bookings) {
-        const activeBookings = parsed.bookings.filter(b => b.status === "active" || b.status === "pending");
+        const activeBookings = parsed.bookings.filter(b => b.status === "active" || b.status === "upcoming");
         parsed.slots = parsed.slots.map(slot => {
           const isOccupied = activeBookings.some(b => b.slotId === slot.id || b.slotNumber === slot.slotNumber);
           if (isOccupied && slot.status === "available") {
@@ -563,15 +565,42 @@ export const store = {
   },
 
   startEVSimulation: () => {
+    // Keep track of which bookings we've already notified to extend
+    const notifiedBookings = new Set<string>();
+
     // Run every 5 seconds to simulate EV charging and idle fees
     setInterval(() => {
       const state = store.getState();
       const currentUserId = state.currentUserId;
       if (!currentUserId) return;
       
-      const activeBookings = state.bookings.filter(b => b.status === "active" && b.evDetails);
+      const now = new Date().getTime();
+
+      // --- Auto-Extend Booking Check ---
+      const allActiveBookings = state.bookings.filter(b => b.status === "active");
+      allActiveBookings.forEach(booking => {
+         const endTime = new Date(booking.endTime).getTime();
+         const minsLeft = (endTime - now) / 60000;
+         
+         if (minsLeft > 0 && minsLeft < 30 && !notifiedBookings.has(booking.id)) {
+            notifiedBookings.add(booking.id);
+            if (booking.userId === currentUserId) {
+              store.addNotification({
+                title: "Parking Time Running Out ⏰",
+                message: `Your booking at slot ${booking.slotNumber} expires in ${Math.ceil(minsLeft)} mins. Avoid penalties!`,
+                category: "Booking",
+                priority: "High",
+                actionLabel: "Extend 30m ($10)",
+                actionData: booking.id
+              });
+            }
+         }
+      });
       
-      activeBookings.forEach(booking => {
+      // --- EV Simulation Check ---
+      const activeEVBookings = allActiveBookings.filter(b => b.evDetails);
+      
+      activeEVBookings.forEach(booking => {
         if (!booking.evDetails) return;
         
         const details = { ...booking.evDetails };
@@ -587,7 +616,7 @@ export const store = {
             
             // Notify user
             if (booking.userId === currentUserId) {
-              store.getState().addNotification({
+              store.addNotification({
                 title: "EV Fully Charged ⚡",
                 message: `Your vehicle at slot ${booking.slotNumber} is fully charged. Please move it to avoid idle fees.`,
                 category: "Parking",
@@ -598,8 +627,22 @@ export const store = {
         } else if (details.batteryLevel === 100 && !details.isCharging) {
           // Accumulate idle time (1 simulated minute per 5 real seconds)
           details.idleTimeMinutes += 1;
-          // ₹5 per idle minute
-          details.idleFee = details.idleTimeMinutes * 5;
+          const feeIncrement = 5;
+          details.idleFee += feeIncrement;
+          
+          // SMART IDLE FEES: Automatically deduct from wallet
+          if (booking.userId) {
+             store.deductFunds(booking.userId, feeIncrement);
+             // Notify every 5 simulated minutes
+             if (details.idleTimeMinutes % 5 === 0 && booking.userId === currentUserId) {
+               store.addNotification({ 
+                 title: "Idle Fee Charged 💸", 
+                 message: `You have been automatically charged $${feeIncrement * 5} from your wallet for blocking the EV charger at ${booking.slotNumber}.`,
+                 category: "Pricing",
+                 priority: "High"
+               });
+             }
+          }
         }
         
         store.updateBooking(booking.id, { evDetails: details });
@@ -685,6 +728,26 @@ export const store = {
       throw error;
     }
   },
+  extendBooking: async (id: string, additionalMinutes: number, cost: number) => {
+    const booking = store.getState().bookings.find(b => b.id === id);
+    if (!booking || !booking.userId) return;
+    
+    // Deduct funds
+    store.deductFunds(booking.userId, cost);
+    
+    // Extend end time
+    const newEndTime = new Date(new Date(booking.endTime).getTime() + additionalMinutes * 60000).toISOString();
+    store.updateBooking(id, { endTime: newEndTime, amount: booking.amount + cost });
+    
+    store.addNotification({
+      userId: booking.userId,
+      title: "Booking Extended ✅",
+      message: `Your booking at ${booking.slotNumber} has been extended by ${additionalMinutes} mins. $${cost} deducted from wallet.`,
+      category: "Booking",
+      priority: "Medium"
+    });
+  },
+  
   updateBooking: async (id: string, updates: Partial<Booking>) => {
     const prevBookings = currentState.bookings;
     const prevSlots = currentState.slots;
@@ -818,7 +881,7 @@ export const store = {
       // Actually insert into the database
       api.insert("emergency_requests", tempRequest);
         // Notify the user that their request was received
-        store.getState().addNotification({
+        store.addNotification({
           userId: request.userId,
           title: "Emergency Request Received",
           message: `Your ${request.type} assistance request has been received. Our team is on the way.`,
@@ -827,7 +890,7 @@ export const store = {
         });
         
         // Notify admins
-        store.getState().addNotification({
+        store.addNotification({
           userId: "admin",
           title: `New SOS: ${request.type.toUpperCase()}`,
           message: `${request.userName} needs ${request.type} assistance at Slot ${request.slotNumber}.`,
@@ -861,7 +924,7 @@ export const store = {
             if (existingReq.type === "tow") msg = "Tow truck assigned.";
             if (existingReq.type === "breakdown") msg = "Vehicle assistance is arriving.";
             
-            store.getState().addNotification({
+            store.addNotification({
               userId: existingReq.userId,
               title: "Help is arriving",
               message: msg,
@@ -869,7 +932,7 @@ export const store = {
               priority: "High"
             });
           } else if (updates.status === "resolved") {
-            store.getState().addNotification({
+            store.addNotification({
               userId: existingReq.userId,
               title: "Request Completed",
               message: `Your ${existingReq.type} assistance request has been marked as resolved.`,
@@ -962,7 +1025,7 @@ export const store = {
     });
 
     // Notify admins
-    store.getState().addNotification({
+    store.addNotification({
       userId: "admin",
       title: "New Incident Reported",
       message: `${incident.severity} priority: ${incident.title} (${incident.category})`,
