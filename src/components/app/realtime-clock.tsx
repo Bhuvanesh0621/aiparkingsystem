@@ -15,7 +15,7 @@ export function RealtimeClock() {
       <Clock className="w-4 h-4 text-muted-foreground hidden lg:block" />
       <div>
         <div className="text-sm font-display font-bold tracking-wider text-foreground tabular-nums leading-tight">
-          {format(time, "HH:mm:ss")}
+          {format(time, "hh:mm:ss a")}
         </div>
         <div className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest leading-tight">
           {format(time, "dd MMM yyyy")}
