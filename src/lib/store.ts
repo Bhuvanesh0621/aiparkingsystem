@@ -411,12 +411,25 @@ function enrichBookingWithEVDetails(booking: any, slots: any[]): any {
 
 let isSupabaseInitialized = false;
 
-export const store = {
-  getState: () => currentState,
-  setState: (newState: Partial<StoreState>) => {
-    currentState = { ...currentState, ...newState };
-    emitChange();
-  },
+  const bc = new BroadcastChannel('smartpark_expo_sync');
+
+  bc.onmessage = (event) => {
+    if (event.data && event.data.type === 'SYNC_SERVICES') {
+      currentState = { ...currentState, serviceRequests: event.data.payload };
+      emitChange();
+    }
+  };
+  
+  export const store = {
+    getState: () => currentState,
+    setState: (newState: Partial<StoreState>) => {
+      currentState = { ...currentState, ...newState };
+      emitChange();
+      // Broadcast state to other tabs for seamless Expo demo
+      if (newState.serviceRequests) {
+        bc.postMessage({ type: 'SYNC_SERVICES', payload: newState.serviceRequests });
+      }
+    },
   openTicket: (id: string) => store.setState({ activeTicketBookingId: id }),
   closeTicket: () => store.setState({ activeTicketBookingId: null }),
   setGateStatus: (status: 'open' | 'closed') => store.setState({ gateStatus: status }),
@@ -453,7 +466,11 @@ export const store = {
       if (data.bookings && data.bookings.length > 0) parsed.bookings = data.bookings.map(b => enrichBookingWithEVDetails(b, parsed.slots || []));
       if (data.incidents && data.incidents.length > 0) parsed.incidents = data.incidents;
       if (data.availableServices && data.availableServices.length > 0) parsed.availableServices = data.availableServices;
-      if (data.serviceRequests && data.serviceRequests.length > 0) parsed.serviceRequests = data.serviceRequests;
+      if (data.serviceRequests && data.serviceRequests.length > 0) {
+        parsed.serviceRequests = data.serviceRequests;
+      } else {
+        parsed.serviceRequests = store.getState().serviceRequests;
+      }
       if (data.emergencyRequests && data.emergencyRequests.length > 0) parsed.emergencyRequests = data.emergencyRequests;
       if (data.notifications && data.notifications.length > 0) parsed.notifications = data.notifications;
       if (data.equipment && data.equipment.length > 0) parsed.equipment = data.equipment;
@@ -1066,6 +1083,7 @@ export const store = {
   
   // Car Services Actions
   requestCarServices: (requests: CarServiceRequest[]) => {
+    requests.forEach(req => api.insert('service_requests', req));
     store.setState({ serviceRequests: [...requests, ...currentState.serviceRequests] });
   },
   updateCarServiceStatus: (id: string, status: CarServiceStatus, staff?: string) => {
