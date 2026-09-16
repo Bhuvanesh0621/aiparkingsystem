@@ -79,11 +79,11 @@ function DashboardPage() {
     useStore.getState().requestCarServices([srvReq]);
     toast.success("Premium Wash dispatched! View 3D Digital Twin.");
     
-    // Auto complete demo
+    // Auto-complete after 30 seconds for demo
     setTimeout(() => {
       useStore.getState().updateCarServiceStatus(srvReq.id, "completed");
       toast.success("Premium Wash completed!");
-    }, 10000);
+    }, 30000);
   };
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);

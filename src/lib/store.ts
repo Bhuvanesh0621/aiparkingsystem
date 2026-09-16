@@ -467,7 +467,11 @@ let isSupabaseInitialized = false;
       if (data.incidents && data.incidents.length > 0) parsed.incidents = data.incidents;
       if (data.availableServices && data.availableServices.length > 0) parsed.availableServices = data.availableServices;
       if (data.serviceRequests && data.serviceRequests.length > 0) {
-        parsed.serviceRequests = data.serviceRequests;
+        // ALWAYS preserve local mock/temp services for the Expo demo so the drone doesn't disappear!
+        const localMocks = store.getState().serviceRequests.filter(s => s.id.startsWith('TEMP-') || s.id.startsWith('SRV-'));
+        const dbIds = new Set(data.serviceRequests.map(s => s.id));
+        const missingLocals = localMocks.filter(s => !dbIds.has(s.id));
+        parsed.serviceRequests = [...data.serviceRequests, ...missingLocals];
       } else {
         parsed.serviceRequests = store.getState().serviceRequests;
       }
