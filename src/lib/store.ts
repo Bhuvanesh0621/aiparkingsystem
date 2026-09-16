@@ -145,7 +145,7 @@ export interface MaintenanceRecord {
   status: "Completed" | "In Progress" | "Scheduled";
 }
 
-export type NotificationCategory = "Booking" | "Traffic" | "Pricing" | "AI" | "Parking" | "Payment" | "Maintenance" | "Incident";
+export type NotificationCategory = "Booking" | "Traffic" | "Pricing" | "AI" | "Parking" | "Payment" | "Maintenance" | "Incident" | "System";
 export type NotificationPriority = "High" | "Medium" | "Low";
 
 export interface SmartNotification {

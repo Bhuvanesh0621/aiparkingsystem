@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, CalendarClock, DollarSign, Sparkles, ParkingCircle, CreditCard, MapPin, Wrench, AlertTriangle } from "lucide-react";
+import { Bell, CalendarClock, DollarSign, Sparkles, ParkingCircle, CreditCard, MapPin, Wrench, AlertTriangle, Settings } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useStore, store, NotificationCategory } from "@/lib/store";
@@ -15,6 +15,7 @@ const categoryIcons: Record<NotificationCategory, React.ElementType> = {
   Payment: CreditCard,
   Maintenance: Wrench,
   Incident: AlertTriangle,
+  System: Settings,
 };
 
 const categoryColors: Record<NotificationCategory, string> = {
@@ -26,6 +27,7 @@ const categoryColors: Record<NotificationCategory, string> = {
   Payment: "text-slate-500 bg-slate-500/10 border-slate-500/20",
   Maintenance: "text-red-500 bg-red-500/10 border-red-500/20",
   Incident: "text-destructive bg-destructive/10 border-destructive/20",
+  System: "text-slate-500 bg-slate-500/10 border-slate-500/20",
 };
 
 export function NotificationsPanel() {
