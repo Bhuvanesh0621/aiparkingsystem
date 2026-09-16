@@ -38,25 +38,50 @@ export function WalletCard() {
       return;
     }
     
+    if (!isRazorpayLoaded) {
+      toast.error("Razorpay SDK not loaded. Please check your internet connection.");
+      return;
+    }
+
     const toastId = toast.loading("Securely initializing payment...");
 
     try {
-      // Simulate backend delay for Expo
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Simulate successful payment directly
-      store.addFunds(user.id, val);
       toast.dismiss(toastId);
-      toast.success(`Successfully added ₹${val} to your wallet!`);
-      setAmount("");
-      
-      store.addNotification({
-        userId: user.id,
-        title: "Wallet Recharge Successful",
-        message: `₹${val} has been added to your smart wallet.`,
-        category: "System",
-        priority: "Normal"
+
+      const options = {
+        key: "rzp_test_TNZpVjGtbaFqJQ",
+        amount: val * 100, // Amount in paise
+        currency: "INR",
+        name: "SmartPark AI",
+        description: `Add ₹${val} to Wallet`,
+        handler: function (response: any) {
+          store.addFunds(user.id, val);
+          toast.success(`Successfully added ₹${val} to your wallet!`);
+          setAmount("");
+          
+          store.addNotification({
+            userId: user.id,
+            title: "Wallet Recharge Successful",
+            message: `₹${val} has been added to your smart wallet.`,
+            category: "System",
+            priority: "Normal"
+          });
+        },
+        prefill: {
+          name: "John Doe",
+          email: "john@example.com",
+          contact: "9999999999",
+        },
+        theme: {
+          color: "#3b82f6",
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (response: any) {
+        toast.error(`Payment Failed: ${response.error.description}`);
       });
+      rzp.open();
       
     } catch (err) {
       toast.dismiss(toastId);

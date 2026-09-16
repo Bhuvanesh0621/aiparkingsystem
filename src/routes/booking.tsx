@@ -173,15 +173,40 @@ function BookingPage() {
       return;
     }
 
+    if (!isRazorpayLoaded) {
+      toast.error("Razorpay SDK not loaded. Please check your internet connection.");
+      return;
+    }
+
     const toastId = toast.loading("Securely initializing payment...");
 
     try {
-      // Simulate backend delay for Expo
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Simulate successful payment directly
       toast.dismiss(toastId);
-      handlePaymentSuccess({ booking: newBooking, earnedPoints });
+
+      const options = {
+        key: "rzp_test_TNZpVjGtbaFqJQ",
+        amount: finalPrice * 100, // Amount in paise
+        currency: "INR",
+        name: "SmartPark AI",
+        description: `Booking for slot ${slot}`,
+        handler: function (response: any) {
+          handlePaymentSuccess({ booking: newBooking, earnedPoints });
+        },
+        prefill: {
+          name: currentUser?.name || "John Doe",
+          email: currentUser?.email || "john@example.com",
+          contact: "9999999999",
+        },
+        theme: {
+          color: "#3b82f6",
+        },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.on("payment.failed", function (response: any) {
+        toast.error(`Payment Failed: ${response.error.description}`);
+      });
+      rzp.open();
       
     } catch (err) {
       toast.dismiss(toastId);
