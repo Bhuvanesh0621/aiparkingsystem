@@ -4,6 +4,55 @@ import { OrbitControls, Text, RoundedBox, Html, Environment, ContactShadows } fr
 import * as THREE from 'three';
 import { useStore } from '@/lib/store';
 
+function CleaningDrone3D({ position }: { position: [number, number, number] }) {
+  const group = useRef<THREE.Group>(null);
+  const ring1 = useRef<THREE.Mesh>(null);
+  const ring2 = useRef<THREE.Mesh>(null);
+  
+  useFrame((state) => {
+    if (group.current) {
+      // Hovering up and down slightly, and circling the car
+      const t = state.clock.elapsedTime;
+      group.current.position.x = position[0] + Math.sin(t) * 1.5;
+      group.current.position.z = position[2] + Math.cos(t) * 1.5;
+      group.current.position.y = position[1] + 1.5 + Math.sin(t * 3) * 0.2;
+      group.current.rotation.y = -t;
+    }
+    if (ring1.current && ring2.current) {
+      ring1.current.rotation.z += 0.2;
+      ring2.current.rotation.z -= 0.2;
+    }
+  });
+
+  return (
+    <group ref={group} position={position}>
+      {/* Drone Body */}
+      <mesh castShadow>
+        <sphereGeometry args={[0.2, 16, 16]} />
+        <meshStandardMaterial color="#0ea5e9" metalness={0.8} roughness={0.2} emissive="#0ea5e9" emissiveIntensity={0.5} />
+      </mesh>
+      
+      {/* Water Spray Effect (Particle Simulation Mock) */}
+      <mesh position={[0, -0.4, 0]}>
+        <coneGeometry args={[0.4, 0.8, 16]} />
+        <meshStandardMaterial color="#38bdf8" transparent opacity={0.3} depthWrite={false} />
+      </mesh>
+      
+      {/* Animated Rings */}
+      <mesh ref={ring1} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.3, 0.02, 16, 32]} />
+        <meshBasicMaterial color="#38bdf8" />
+      </mesh>
+      <mesh ref={ring2} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.4, 0.02, 16, 32]} />
+        <meshBasicMaterial color="#38bdf8" />
+      </mesh>
+      
+      <pointLight color="#38bdf8" intensity={2} distance={5} />
+    </group>
+  );
+}
+
 // Enhanced Vehicle Model supporting Car, SUV, and Bike
 function VehicleModel({ type, isEV, position }: { type: string, isEV: boolean, position: [number, number, number] }) {
   const group = useRef<THREE.Group>(null);
@@ -100,7 +149,7 @@ function EVCharger({ position }: { position: [number, number, number] }) {
 function ParkingSlot3D({ slot, position }: { slot: any, position: [number, number, number] }) {
   const [hovered, setHovered] = useState(false);
   const [clicked, setClicked] = useState(false);
-  const { bookings, users } = useStore();
+  const { bookings, users, serviceRequests } = useStore();
   
   const isOccupied = slot.status === 'occupied' || slot.status === 'reserved';
   const isIncident = slot.status === 'maintenance'; 
@@ -110,6 +159,11 @@ function ParkingSlot3D({ slot, position }: { slot: any, position: [number, numbe
   // Find active booking for this slot
   const activeBooking = isOccupied ? bookings.find(b => b.slotNumber === slot.slotNumber && b.status === 'active') : null;
   const driver = activeBooking ? users.find(u => u.id === activeBooking.userId) : null;
+  
+  // Find active car wash service
+  const activeService = activeBooking 
+    ? serviceRequests.find(s => s.bookingId === activeBooking.id && s.status === 'in_progress' && s.category === 'Car Wash') 
+    : null;
   
   // Calculate time remaining if booking exists
   let timeRemaining = "";
@@ -134,6 +188,9 @@ function ParkingSlot3D({ slot, position }: { slot: any, position: [number, numbe
         <meshStandardMaterial color={hovered ? '#2a2a35' : '#1a1a24'} transparent opacity={0.8} />
       </mesh>
       
+      {/* Car Wash Drone */}
+      {activeService && <CleaningDrone3D position={[0, 1, 0]} />}
+
       {/* Slot Border Lines */}
       <mesh position={[-1.4, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[0.08, 5.5]} />

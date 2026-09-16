@@ -49,6 +49,41 @@ function DashboardPage() {
   const activeIncidents = incidents.filter(i => i.reportedBy === currentUser?.id && i.status !== "Resolved" && i.status !== "Closed");
   const stats = useStats();
   const { revenueSeries, vehicleMix, mtdRevenue } = useDashboardStats();
+
+  const requestCarWash = () => {
+    if (!activeBooking) return;
+    
+    if (profile && profile.walletBalance < 599) {
+      toast.error("Insufficient wallet balance for Premium Wash.");
+      return;
+    }
+    
+    if (profile) {
+      useStore.getState().updateProfile({ ...profile, walletBalance: profile.walletBalance - 599 });
+      setProfile({ ...profile, walletBalance: profile.walletBalance - 599 });
+    }
+    
+    const srvReq: any = {
+      id: `SRV-${Date.now()}`,
+      serviceId: "d8a39a04-5178-43e8-8b9a-4c2813134f55",
+      name: "Premium Wash",
+      category: "Car Wash",
+      price: 599,
+      durationMinutes: 45,
+      status: "in_progress",
+      bookingId: activeBooking.id,
+    };
+    
+    useStore.getState().requestCarServices([srvReq]);
+    toast.success("Premium Wash dispatched! View 3D Digital Twin.");
+    
+    // Auto complete demo
+    setTimeout(() => {
+      useStore.getState().updateCarServiceStatus(srvReq.id, "completed");
+      toast.success("Premium Wash completed!");
+    }, 10000);
+  };
+
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isFindMyCarOpen, setIsFindMyCarOpen] = useState(false);
 
@@ -86,10 +121,16 @@ function DashboardPage() {
               </div>
               <h2 className="text-2xl font-bold tracking-tight mb-1">Slot {activeBooking.slotNumber} · F{activeBooking.floor}</h2>
               <p className="text-muted-foreground mb-4">{activeBooking.vehicleNumber} · Since {new Date(activeBooking.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-              <Button variant="hero" onClick={() => setIsFindMyCarOpen(true)} className="gap-2 shadow-glow bg-blue-600 hover:bg-blue-700 text-white">
-                <MapPin className="h-4 w-4" />
-                Live AR Navigation
-              </Button>
+              <div className="flex gap-3 mt-2">
+                <Button variant="hero" onClick={() => setIsFindMyCarOpen(true)} className="gap-2 shadow-glow bg-blue-600 hover:bg-blue-700 text-white flex-1">
+                  <MapPin className="h-4 w-4" />
+                  Live AR
+                </Button>
+                <Button variant="outline" onClick={requestCarWash} disabled={activeServices.some((s: any) => s.category === 'Car Wash' && s.status === 'in_progress')} className="gap-2 border-white/20 hover:bg-white/10 flex-1">
+                  <Wrench className="h-4 w-4" />
+                  Car Wash (₹599)
+                </Button>
+              </div>
             </div>
             
             {activeServices.length > 0 && (
