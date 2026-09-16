@@ -50,18 +50,18 @@ function DashboardPage() {
   const stats = useStats();
   const { revenueSeries, vehicleMix, mtdRevenue } = useDashboardStats();
 
-  const requestCarWash = () => {
-    if (!activeBooking) return;
-    
-    if (profile && profile.walletBalance < 599) {
-      toast.error("Insufficient wallet balance for Premium Wash.");
-      return;
-    }
-    
-    if (profile) {
-      useStore.getState().updateProfile({ ...profile, walletBalance: profile.walletBalance - 599 });
-      setProfile({ ...profile, walletBalance: profile.walletBalance - 599 });
-    }
+    const requestCarWash = () => {
+      if (!activeBooking) return;
+      
+      if (profile && profile.walletBalance < 599) {
+        toast.error("Insufficient wallet balance for Premium Wash.");
+        return;
+      }
+      
+      if (currentUser?.id) {
+        useStore.getState().deductFunds(currentUser.id, 599);
+        setProfile((prev: any) => ({ ...prev, walletBalance: prev.walletBalance - 599 }));
+      }
     
     const srvReq: any = {
       id: `SRV-${Date.now()}`,
