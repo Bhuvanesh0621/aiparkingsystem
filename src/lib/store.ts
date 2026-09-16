@@ -201,6 +201,7 @@ interface StoreState {
   maintenanceRecords: MaintenanceRecord[];
   incidents: Incident[];
   activeTicketBookingId: string | null;
+  gateStatus: 'open' | 'closed';
 }
 
 const mockIncidents: Incident[] = [
@@ -280,6 +281,7 @@ const initialMaintenanceRecords: MaintenanceRecord[] = [
 const DEFAULT_STATE: StoreState = {
   currentUserId: null,
   activeTicketBookingId: null,
+  gateStatus: 'closed',
   slots: initialSlots,
   bookings: [],
   users: [
@@ -417,6 +419,7 @@ export const store = {
   },
   openTicket: (id: string) => store.setState({ activeTicketBookingId: id }),
   closeTicket: () => store.setState({ activeTicketBookingId: null }),
+  setGateStatus: (status: 'open' | 'closed') => store.setState({ gateStatus: status }),
   subscribe: (listener: () => void) => {
     listeners.add(listener);
     return () => { listeners.delete(listener); };

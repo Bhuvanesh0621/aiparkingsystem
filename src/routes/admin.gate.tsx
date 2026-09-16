@@ -201,6 +201,14 @@ function GateSimulatorPage() {
       try {
         await store.updateBooking(result.booking.id, { status: "active" });
         setGateOpen(true);
+        // Link to 3D Digital Twin
+        (store as any).setGateStatus("open");
+        
+        // Auto-close gate after 5 seconds
+        setTimeout(() => {
+          setGateOpen(false);
+          (store as any).setGateStatus("closed");
+        }, 5000);
       } catch (err) {
         console.error("Failed to open gate:", err);
         // Error toast could be added here

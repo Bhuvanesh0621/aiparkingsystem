@@ -99,15 +99,34 @@ function EVCharger({ position }: { position: [number, number, number] }) {
 
 function ParkingSlot3D({ slot, position }: { slot: any, position: [number, number, number] }) {
   const [hovered, setHovered] = useState(false);
+  const [clicked, setClicked] = useState(false);
+  const { bookings, users } = useStore();
+  
   const isOccupied = slot.status === 'occupied' || slot.status === 'reserved';
   const isIncident = slot.status === 'maintenance'; 
   
   const baseColor = isIncident ? '#ef4444' : isOccupied ? '#3b82f6' : '#22c55e';
 
+  // Find active booking for this slot
+  const activeBooking = isOccupied ? bookings.find(b => b.slotNumber === slot.slotNumber && b.status === 'active') : null;
+  const driver = activeBooking ? users.find(u => u.id === activeBooking.userId) : null;
+  
+  // Calculate time remaining if booking exists
+  let timeRemaining = "";
+  if (activeBooking) {
+    const end = new Date(activeBooking.endTime).getTime();
+    const now = new Date().getTime();
+    const diff = Math.max(0, end - now);
+    const hrs = Math.floor(diff / 3600000);
+    const mins = Math.floor((diff % 3600000) / 60000);
+    timeRemaining = `${hrs}h ${mins}m left`;
+  }
+
   return (
     <group position={position} 
-           onPointerOver={() => setHovered(true)} 
-           onPointerOut={() => setHovered(false)}>
+           onPointerOver={(e) => { e.stopPropagation(); setHovered(true); }} 
+           onPointerOut={(e) => { e.stopPropagation(); setHovered(false); }}
+           onClick={(e) => { e.stopPropagation(); setClicked(!clicked); }}>
       
       {/* Slot Floor Markings */}
       <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
@@ -153,10 +172,10 @@ function ParkingSlot3D({ slot, position }: { slot: any, position: [number, numbe
         <pointLight position={[0, 2, 0]} color="#ef4444" intensity={8} distance={15} />
       )}
 
-      {/* Tooltip on Hover */}
-      {hovered && (
+      {/* Tooltip on Hover or Click */}
+      {(hovered || clicked) && (
         <Html position={[0, 2.5, 0]} center zIndexRange={[100, 0]}>
-          <div className="bg-black/90 backdrop-blur-xl border border-white/20 text-white p-4 rounded-xl shadow-2xl w-56 pointer-events-none transform -translate-y-full transition-all duration-200 scale-100 origin-bottom">
+          <div className="bg-black/90 backdrop-blur-xl border border-white/20 text-white p-4 rounded-xl shadow-2xl w-64 pointer-events-none transform -translate-y-full transition-all duration-200 scale-100 origin-bottom">
             <div className="flex justify-between items-start mb-2">
               <div className="font-bold text-xl text-white">{slot.slotNumber}</div>
               <div className={`text-[10px] font-bold px-2 py-1 rounded ${isOccupied ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30'}`}>
@@ -173,10 +192,22 @@ function ParkingSlot3D({ slot, position }: { slot: any, position: [number, numbe
                 <span className="text-white/50">Type</span>
                 <span className="font-medium capitalize">{slot.type}</span>
               </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-white/50">Rate</span>
-                <span className="font-medium">₹{slot.pricePerHour}/hr</span>
-              </div>
+              {clicked && activeBooking && (
+                <>
+                  <div className="flex justify-between text-xs mt-2 pt-2 border-t border-white/10">
+                    <span className="text-white/50">Driver</span>
+                    <span className="font-medium">{driver?.name || "Guest"}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-white/50">Plate</span>
+                    <span className="font-mono text-primary font-bold">{activeBooking.vehicleNumber}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-white/50">Time</span>
+                    <span className="font-medium text-amber-400">{timeRemaining}</span>
+                  </div>
+                </>
+              )}
             </div>
 
             {slot.isEV && (
@@ -191,6 +222,51 @@ function ParkingSlot3D({ slot, position }: { slot: any, position: [number, numbe
           </div>
         </Html>
       )}
+    </group>
+  );
+}
+
+function GateBarrier3D({ position, rotation }: { position: [number, number, number], rotation: [number, number, number] }) {
+  const { gateStatus } = useStore();
+  const barrierRef = useRef<THREE.Group>(null);
+  
+  useFrame(() => {
+    if (barrierRef.current) {
+      // Rotate up 90 degrees (Math.PI / 2) when open
+      const targetRotationZ = gateStatus === 'open' ? Math.PI / 2 : 0;
+      barrierRef.current.rotation.z = THREE.MathUtils.lerp(barrierRef.current.rotation.z, targetRotationZ, 0.1);
+    }
+  });
+
+  return (
+    <group position={position} rotation={rotation}>
+      {/* Base/Motor Box */}
+      <mesh position={[-2, 0.5, 0]} castShadow>
+        <boxGeometry args={[0.8, 1, 0.8]} />
+        <meshStandardMaterial color="#eab308" metalness={0.4} roughness={0.6} />
+      </mesh>
+      
+      {/* The moving barrier arm */}
+      <group position={[-1.8, 0.8, 0]} ref={barrierRef}>
+        <mesh position={[1.8, 0, 0]} castShadow>
+          <boxGeometry args={[3.6, 0.15, 0.1]} />
+          <meshStandardMaterial color="#ffffff" metalness={0.1} roughness={0.8} />
+        </mesh>
+        {/* Red stripes */}
+        {[0, 0.6, 1.2, 1.8, 2.4, 3.0].map((x, i) => (
+          <mesh key={i} position={[x, 0, 0.06]}>
+            <planeGeometry args={[0.3, 0.16]} />
+            <meshBasicMaterial color="#ef4444" />
+          </mesh>
+        ))}
+      </group>
+      
+      {/* Status Light */}
+      <mesh position={[-2, 1.05, 0]}>
+        <boxGeometry args={[0.3, 0.1, 0.3]} />
+        <meshBasicMaterial color={gateStatus === 'open' ? '#22c55e' : '#ef4444'} />
+      </mesh>
+      <pointLight position={[-2, 1.2, 0]} color={gateStatus === 'open' ? '#22c55e' : '#ef4444'} intensity={2} distance={5} />
     </group>
   );
 }
@@ -253,7 +329,7 @@ export default function DigitalTwinDashboard() {
       
       <div className="absolute bottom-6 right-6 z-10 pointer-events-none text-right">
         <div className="text-xs text-white/50 mb-1 tracking-widest font-mono">CAMERA CONTROLS</div>
-        <div className="text-sm font-medium text-white/80 bg-black/40 px-3 py-1.5 rounded-lg border border-white/5 backdrop-blur-md">Scroll to Zoom • Drag to Orbit</div>
+        <div className="text-sm font-medium text-white/80 bg-black/40 px-3 py-1.5 rounded-lg border border-white/5 backdrop-blur-md">Scroll to Zoom • Drag to Orbit • Click Cars</div>
       </div>
 
       <Canvas shadows camera={{ position: [0, 18, 30], fov: 40 }}>
@@ -275,6 +351,9 @@ export default function DigitalTwinDashboard() {
         <ContactShadows position={[0, 0, 0]} opacity={0.4} scale={50} blur={2} far={10} />
         
         {slotNodes}
+
+        {/* Entry Gate Barrier */}
+        <GateBarrier3D position={[0, 0, 12]} rotation={[0, 0, 0]} />
 
         <Environment preset="night" />
         
