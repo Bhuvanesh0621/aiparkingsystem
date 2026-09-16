@@ -173,54 +173,19 @@ function BookingPage() {
       return;
     }
 
-    if (!isRazorpayLoaded) {
-      toast.error("Razorpay SDK not loaded. Please check your internet connection.");
-      return;
-    }
-
     const toastId = toast.loading("Securely initializing payment...");
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:3001"}/api/create-order`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: finalPrice }),
-      });
-
-      if (!response.ok) throw new Error("Failed to create order");
+      // Simulate backend delay for Expo
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
-      const order = await response.json();
+      // Simulate successful payment directly
       toast.dismiss(toastId);
-
-      const options = {
-        key: "rzp_test_TNZpVjGtbaFqJQ",
-        amount: order.amount,
-        currency: order.currency,
-        name: "SmartPark AI",
-        description: `Booking for slot ${slot}`,
-        order_id: order.id,
-        handler: function (response: any) {
-          handlePaymentSuccess({ booking: newBooking, earnedPoints });
-        },
-        prefill: {
-          name: currentUser?.name || "John Doe",
-          email: currentUser?.email || "john@example.com",
-          contact: "9999999999",
-        },
-        theme: {
-          color: "#3b82f6",
-        },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.on("payment.failed", function (response: any) {
-        toast.error(`Payment Failed: ${response.error.description}`);
-      });
-      rzp.open();
-
+      handlePaymentSuccess({ booking: newBooking, earnedPoints });
+      
     } catch (err) {
       toast.dismiss(toastId);
-      toast.error("Could not connect to payment server. Ensure the backend is running.");
+      toast.error("Could not complete payment simulation.");
       console.error(err);
     }
   };
