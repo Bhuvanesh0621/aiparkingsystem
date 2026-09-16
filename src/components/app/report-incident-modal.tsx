@@ -55,6 +55,28 @@ export function ReportIncidentModal({
     }, 800);
   };
 
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File is too large (max 5MB)");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64String = event.target?.result as string;
+      setPhotos((prev) => [...prev, base64String]);
+      toast.success("Photo attached successfully");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotos(prev => prev.filter((_, i) => i !== index));
+  };
+
   const categories = [
     "Accident", "Broken Parking Sensor", "Damaged EV Charger",
     "Illegal Parking", "Water Leakage", "Poor Lighting",
@@ -157,14 +179,37 @@ export function ReportIncidentModal({
 
                   <div className="space-y-2 pt-2">
                     <Label>Upload Photos</Label>
-                    <div className="border-2 border-dashed border-white/20 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-white/5 hover:bg-white/10 transition-colors cursor-pointer"
-                         onClick={() => toast.success("Photo attached successfully")}>
-                      <div className="h-10 w-10 rounded-full bg-primary/20 text-primary flex items-center justify-center mb-2">
+                    
+                    {photos.length > 0 && (
+                      <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+                        {photos.map((photo, index) => (
+                          <div key={index} className="relative h-16 w-16 shrink-0 rounded-lg overflow-hidden border border-white/20">
+                            <img src={photo} alt="Upload preview" className="object-cover w-full h-full" />
+                            <button
+                              type="button"
+                              onClick={() => removePhoto(index)}
+                              className="absolute top-1 right-1 bg-black/60 rounded-full p-0.5 hover:bg-destructive/80 transition-colors"
+                            >
+                              <X className="h-3 w-3 text-white" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
+                    <label className="border-2 border-dashed border-white/20 rounded-xl p-6 flex flex-col items-center justify-center text-center bg-white/5 hover:bg-white/10 transition-colors cursor-pointer relative">
+                      <input 
+                        type="file" 
+                        accept="image/jpeg, image/png" 
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        onChange={handlePhotoUpload}
+                      />
+                      <div className="h-10 w-10 rounded-full bg-primary/20 text-primary flex items-center justify-center mb-2 pointer-events-none">
                          <Camera className="h-5 w-5" />
                       </div>
-                      <p className="text-sm font-medium">Tap to upload photos</p>
-                      <p className="text-xs text-muted-foreground mt-1">Supports JPG, PNG (Max 5MB)</p>
-                    </div>
+                      <p className="text-sm font-medium pointer-events-none">Tap to upload photos</p>
+                      <p className="text-xs text-muted-foreground mt-1 pointer-events-none">Supports JPG, PNG (Max 5MB)</p>
+                    </label>
                   </div>
 
                 </form>

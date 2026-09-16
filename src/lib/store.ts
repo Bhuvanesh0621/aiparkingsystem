@@ -113,6 +113,7 @@ export interface EmergencyRequest {
   status: EmergencyStatus;
   timestamp: string;
   notes?: string;
+  photos?: string[];
   assignedStaff?: string;
 }
 
