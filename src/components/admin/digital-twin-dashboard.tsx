@@ -278,20 +278,31 @@ export default function DigitalTwinDashboard() {
   // Get unique floors
   const floors = useMemo(() => Array.from(new Set(slots.map(s => s.floor))).sort(), [slots]);
   
-  // Filter slots by active floor
-  const visibleSlots = useMemo(() => slots.filter(s => s.floor === activeFloor), [slots, activeFloor]);
+  // Filter slots by active floor and sort by slot number so they are perfectly ordered
+  const visibleSlots = useMemo(() => {
+    return slots
+      .filter(s => s.floor === activeFloor)
+      .sort((a, b) => a.slotNumber.localeCompare(b.slotNumber));
+  }, [slots, activeFloor]);
 
   const slotNodes = useMemo(() => {
     return visibleSlots.map((slot, index) => {
-      // Create a nice 2-row layout with an aisle in the middle
-      const cols = Math.ceil(visibleSlots.length / 2);
+      // Create a spacious multi-row layout (8 slots per row max)
+      const cols = 8;
       const col = index % cols;
       const row = Math.floor(index / cols);
       
-      const x = (col - (cols / 2) + 0.5) * 3.5; // Spread out horizontally
-      const z = row === 0 ? -4 : 4; // Top row and bottom row
+      const x = (col - (Math.min(visibleSlots.length, cols) / 2) + 0.5) * 4.2; // Generous horizontal spacing
       
-      const rotY = row === 0 ? 0 : Math.PI; // Bottom row faces the aisle
+      // Pairs of rows face a central aisle
+      const aisle = Math.floor(row / 2);
+      const isTopRowInAisle = row % 2 === 0;
+      
+      // Massive gap (12 units) between opposing rows in an aisle to prevent visual overlap
+      const z = aisle * 25 + (isTopRowInAisle ? -6 : 6); 
+      
+      // Top row faces down (0), bottom row faces up (Math.PI)
+      const rotY = isTopRowInAisle ? 0 : Math.PI; 
 
       return (
         <group key={slot.id} rotation={[0, rotY, 0]}>
@@ -332,7 +343,7 @@ export default function DigitalTwinDashboard() {
         <div className="text-sm font-medium text-white/80 bg-black/40 px-3 py-1.5 rounded-lg border border-white/5 backdrop-blur-md">Scroll to Zoom • Drag to Orbit • Click Cars</div>
       </div>
 
-      <Canvas shadows camera={{ position: [0, 18, 30], fov: 40 }}>
+      <Canvas shadows camera={{ position: [0, 25, 40], fov: 45 }}>
         <color attach="background" args={['#0a0a16']} />
         <fog attach="fog" args={['#0a0a16', 30, 80]} />
         
@@ -353,7 +364,7 @@ export default function DigitalTwinDashboard() {
         {slotNodes}
 
         {/* Entry Gate Barrier */}
-        <GateBarrier3D position={[0, 0, 12]} rotation={[0, 0, 0]} />
+        <GateBarrier3D position={[8, 0, 16]} rotation={[0, 0, 0]} />
 
         <Environment preset="night" />
         
