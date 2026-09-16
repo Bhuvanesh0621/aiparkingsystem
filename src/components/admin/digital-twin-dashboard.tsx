@@ -305,8 +305,8 @@ export default function DigitalTwinDashboard() {
       const rotY = isTopRowInAisle ? 0 : Math.PI; 
 
       return (
-        <group key={slot.id} rotation={[0, rotY, 0]}>
-          <ParkingSlot3D slot={slot} position={[x, 0, z]} />
+        <group key={slot.id} position={[x, 0, z]} rotation={[0, rotY, 0]}>
+          <ParkingSlot3D slot={slot} position={[0, 0, 0]} />
         </group>
       );
     });
@@ -364,7 +364,7 @@ export default function DigitalTwinDashboard() {
         {slotNodes}
 
         {/* Entry Gate Barrier */}
-        <GateBarrier3D position={[8, 0, 16]} rotation={[0, 0, 0]} />
+        <GateBarrier3D position={[18, 0, 0]} rotation={[0, -Math.PI / 2, 0]} />
 
         <Environment preset="night" />
         
