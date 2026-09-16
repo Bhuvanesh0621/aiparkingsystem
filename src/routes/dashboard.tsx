@@ -18,7 +18,9 @@ import { toast } from "sonner";
 import { useStore, useStats, useDashboardStats, store } from "@/lib/store";
 import { ReportIncidentModal } from "@/components/app/report-incident-modal";
 import { ARNavigation } from "@/components/app/ar-navigation";
-import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { lazy, Suspense, useEffect, useState } from "react";
+const DigitalTwinDashboard = lazy(() => import("@/components/admin/digital-twin-dashboard"));
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -86,6 +88,7 @@ function DashboardPage() {
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isFindMyCarOpen, setIsFindMyCarOpen] = useState(false);
+  const [isLive3DOpen, setIsLive3DOpen] = useState(false);
 
   return (
     <AppShell>
@@ -121,12 +124,16 @@ function DashboardPage() {
               </div>
               <h2 className="text-2xl font-bold tracking-tight mb-1">Slot {activeBooking.slotNumber} · F{activeBooking.floor}</h2>
               <p className="text-muted-foreground mb-4">{activeBooking.vehicleNumber} · Since {new Date(activeBooking.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
-              <div className="flex gap-3 mt-2">
-                <Button variant="hero" onClick={() => setIsFindMyCarOpen(true)} className="gap-2 shadow-glow bg-blue-600 hover:bg-blue-700 text-white flex-1">
+              <div className="flex flex-wrap gap-3 mt-2">
+                <Button variant="hero" onClick={() => setIsFindMyCarOpen(true)} className="gap-2 shadow-glow bg-blue-600 hover:bg-blue-700 text-white flex-1 min-w-[120px]">
                   <MapPin className="h-4 w-4" />
                   Live AR
                 </Button>
-                <Button variant="outline" onClick={requestCarWash} disabled={activeServices.some((s: any) => s.category === 'Car Wash' && s.status === 'in_progress')} className="gap-2 border-white/20 hover:bg-white/10 flex-1">
+                <Button variant="hero" onClick={() => setIsLive3DOpen(true)} className="gap-2 shadow-glow bg-purple-600 hover:bg-purple-700 text-white flex-1 min-w-[120px]">
+                  <Car className="h-4 w-4" />
+                  3D Twin
+                </Button>
+                <Button variant="outline" onClick={requestCarWash} disabled={activeServices.some((s: any) => s.category === 'Car Wash' && s.status === 'in_progress')} className="gap-2 border-white/20 hover:bg-white/10 flex-1 min-w-[120px]">
                   <Wrench className="h-4 w-4" />
                   Car Wash (₹599)
                 </Button>
@@ -316,6 +323,19 @@ function DashboardPage() {
           onClose={() => setIsFindMyCarOpen(false)} 
         />
       )}
+      
+      <Dialog open={isLive3DOpen} onOpenChange={setIsLive3DOpen}>
+        <DialogContent className="max-w-6xl w-[90vw] h-[80vh] bg-black/90 border-white/10 p-0 overflow-hidden flex flex-col">
+          <DialogHeader className="p-4 bg-background/50 backdrop-blur-md absolute top-0 left-0 right-0 z-20 border-b border-white/10">
+            <DialogTitle>Live 3D Digital Twin</DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 w-full h-full relative">
+            <Suspense fallback={<div className="flex items-center justify-center h-full">Loading 3D Engine...</div>}>
+              <DigitalTwinDashboard />
+            </Suspense>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
