@@ -46,14 +46,27 @@ export function WalletCard() {
     const toastId = toast.loading("Securely initializing payment...");
 
     try {
+      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+      const response = await fetch(`${apiUrl}/api/create-order`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: val }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create order. Is the backend running?");
+      }
+
+      const order = await response.json();
       toast.dismiss(toastId);
 
       const options = {
         key: "rzp_test_TNZpVjGtbaFqJQ",
-        amount: val * 100, // Amount in paise
-        currency: "INR",
+        amount: order.amount,
+        currency: order.currency,
         name: "SmartPark AI",
         description: `Add ₹${val} to Wallet`,
+        order_id: order.id,
         handler: function (response: any) {
           store.addFunds(user.id, val);
           toast.success(`Successfully added ₹${val} to your wallet!`);
@@ -83,9 +96,9 @@ export function WalletCard() {
       });
       rzp.open();
       
-    } catch (err) {
+    } catch (err: any) {
       toast.dismiss(toastId);
-      toast.error("Could not complete payment simulation.");
+      toast.error(err.message || "Could not connect to payment server. Ensure the backend is running.");
       console.error(err);
     }
   };
