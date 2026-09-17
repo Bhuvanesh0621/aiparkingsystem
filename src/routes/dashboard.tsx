@@ -18,9 +18,7 @@ import { toast } from "sonner";
 import { useStore, useStats, useDashboardStats, store } from "@/lib/store";
 import { ReportIncidentModal } from "@/components/app/report-incident-modal";
 import { ARNavigation } from "@/components/app/ar-navigation";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { lazy, Suspense, useEffect, useState } from "react";
-const DigitalTwinDashboard = lazy(() => import("@/components/admin/digital-twin-dashboard"));
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -52,43 +50,9 @@ function DashboardPage() {
   const stats = useStats();
   const { revenueSeries, vehicleMix, mtdRevenue } = useDashboardStats();
 
-    const requestCarWash = () => {
-      if (!activeBooking) return;
-      
-      if (profile && profile.walletBalance < 599) {
-        toast.error("Insufficient wallet balance for Premium Wash.");
-        return;
-      }
-      
-      if (currentUser?.id) {
-        useStore.getState().deductFunds(currentUser.id, 599);
-        setProfile((prev: any) => ({ ...prev, walletBalance: prev.walletBalance - 599 }));
-      }
-    
-    const srvReq: any = {
-      id: `SRV-${Date.now()}`,
-      serviceId: "d8a39a04-5178-43e8-8b9a-4c2813134f55",
-      name: "Premium Wash",
-      category: "Car Wash",
-      price: 599,
-      durationMinutes: 45,
-      status: "in_progress",
-      bookingId: activeBooking.id,
-    };
-    
-    useStore.getState().requestCarServices([srvReq]);
-    toast.success("Premium Wash dispatched! View 3D Digital Twin.");
-    
-    // Auto-complete after 30 seconds for demo
-    setTimeout(() => {
-      useStore.getState().updateCarServiceStatus(srvReq.id, "completed");
-      toast.success("Premium Wash completed!");
-    }, 30000);
-  };
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isFindMyCarOpen, setIsFindMyCarOpen] = useState(false);
-  const [isLive3DOpen, setIsLive3DOpen] = useState(false);
 
   return (
     <AppShell>
@@ -128,14 +92,6 @@ function DashboardPage() {
                 <Button variant="hero" onClick={() => setIsFindMyCarOpen(true)} className="gap-2 shadow-glow bg-blue-600 hover:bg-blue-700 text-white flex-1 min-w-[120px]">
                   <MapPin className="h-4 w-4" />
                   Live AR
-                </Button>
-                <Button variant="hero" onClick={() => setIsLive3DOpen(true)} className="gap-2 shadow-glow bg-purple-600 hover:bg-purple-700 text-white flex-1 min-w-[120px]">
-                  <Car className="h-4 w-4" />
-                  3D Twin
-                </Button>
-                <Button variant="outline" onClick={requestCarWash} disabled={activeServices.some((s: any) => s.category === 'Car Wash' && s.status === 'in_progress')} className="gap-2 border-white/20 hover:bg-white/10 flex-1 min-w-[120px]">
-                  <Wrench className="h-4 w-4" />
-                  Car Wash (₹599)
                 </Button>
               </div>
             </div>
@@ -323,19 +279,6 @@ function DashboardPage() {
           onClose={() => setIsFindMyCarOpen(false)} 
         />
       )}
-      
-      <Dialog open={isLive3DOpen} onOpenChange={setIsLive3DOpen}>
-        <DialogContent className="max-w-6xl w-[90vw] h-[80vh] bg-black/90 border-white/10 p-0 overflow-hidden flex flex-col">
-          <DialogHeader className="p-4 bg-background/50 backdrop-blur-md absolute top-0 left-0 right-0 z-20 border-b border-white/10">
-            <DialogTitle>Live 3D Digital Twin</DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 w-full h-full relative">
-            <Suspense fallback={<div className="flex items-center justify-center h-full">Loading 3D Engine...</div>}>
-              <DigitalTwinDashboard />
-            </Suspense>
-          </div>
-        </DialogContent>
-      </Dialog>
     </AppShell>
   );
 }
