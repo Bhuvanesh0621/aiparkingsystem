@@ -181,27 +181,14 @@ function BookingPage() {
     const toastId = toast.loading("Securely initializing payment...");
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
-      const response = await fetch(`${apiUrl}/api/create-order`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: finalPrice }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create order. Is the backend running?");
-      }
-
-      const order = await response.json();
       toast.dismiss(toastId);
 
       const options = {
         key: "rzp_test_TNZpVjGtbaFqJQ",
-        amount: order.amount,
-        currency: order.currency,
+        amount: finalPrice * 100, // Amount in paise
+        currency: "INR",
         name: "SmartPark AI",
         description: `Booking for slot ${slot}`,
-        order_id: order.id,
         handler: function (response: any) {
           handlePaymentSuccess({ booking: newBooking, earnedPoints });
         },
