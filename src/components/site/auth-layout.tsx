@@ -2,12 +2,14 @@ import { Link } from "@tanstack/react-router";
 import { motion } from "motion/react";
 import { Car, Sparkles } from "lucide-react";
 import type { ReactNode } from "react";
+import { CyberBackground } from "./cyber-background";
 
 export function AuthLayout({
   title, subtitle, children, footer,
 }: { title: string; subtitle: string; children: ReactNode; footer?: ReactNode }) {
   return (
     <div className="relative min-h-screen bg-background bg-hero overflow-hidden">
+      <CyberBackground />
       <div className="absolute inset-0 bg-grid opacity-40 pointer-events-none" />
       <div className="relative z-10 grid min-h-screen lg:grid-cols-2">
         <div className="hidden lg:flex flex-col justify-between p-10 border-r border-border/40">

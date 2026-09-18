@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { auth } from "@/lib/auth";
 import { useStore } from "@/lib/store";
+import { CyberBackground } from "@/components/site/cyber-background";
 
 
 const userNav = [
@@ -52,6 +53,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background bg-hero relative">
+      {(pathname === "/dashboard" || pathname === "/admin") && <CyberBackground />}
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 w-72 border-r border-border/50 glass-strong px-4 py-5 flex-col gap-2 transition-transform",
