@@ -1,6 +1,6 @@
-﻿import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Grid, Sparkles, Float } from '@react-three/drei';
+import { Grid, Sparkles, Float, Points } from '@react-three/drei';
 import * as THREE from 'three';
 
 function MovingGrid() {
