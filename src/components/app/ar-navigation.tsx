@@ -117,7 +117,7 @@ export function ARNavigation({ slotNumber, onClose }: ARNavigationProps) {
   }, []);
 
   return (
-    <div className="absolute inset-0 bg-black overflow-hidden flex flex-col w-full h-full">
+    <div className="fixed inset-0 z-[100] bg-black overflow-hidden flex flex-col">
       {/* Background Camera Feed */}
       <video 
         ref={videoRef} 
