@@ -9,6 +9,7 @@ import { useStore } from "@/lib/store";
 import { auth } from "@/lib/auth";
 import { toast } from "sonner";
 import { useRazorpay } from "@/lib/useRazorpay";
+import { SpotlightCard } from "@/components/ui/spotlight-card";
 
 export function WalletCard() {
   const { users } = useStore();
@@ -120,7 +121,7 @@ export function WalletCard() {
 
   return (
     <>
-    <div className="glass rounded-3xl p-5 relative overflow-hidden group col-span-2 lg:col-span-1 flex flex-col justify-between h-full">
+    <SpotlightCard className="p-5 overflow-hidden group col-span-2 lg:col-span-1 flex flex-col justify-between h-full">
       {/* Background Gradients */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 rounded-full blur-3xl -mr-16 -mt-16 transition-transform duration-500 group-hover:scale-150" />
       <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/20 rounded-full blur-2xl -ml-12 -mb-12" />
@@ -239,7 +240,7 @@ export function WalletCard() {
           </div>
         )}
       </div>
-    </div>
+    </SpotlightCard>
     
     </>
   );

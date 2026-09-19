@@ -19,6 +19,7 @@ import { useStore, useStats, useDashboardStats, store } from "@/lib/store";
 import { ReportIncidentModal } from "@/components/app/report-incident-modal";
 import { FindMyCarModal } from "@/components/app/find-my-car-modal";
 import { ARNavigation } from "@/components/app/ar-navigation";
+import { SpotlightCard } from "@/components/ui/spotlight-card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 
@@ -216,7 +217,7 @@ function DashboardPage() {
           </div>
 
           {/* Quick Actions Block */}
-          <div className="glass rounded-2xl p-6">
+          <SpotlightCard className="p-6">
           <div className="font-semibold mb-4 text-lg">Quick actions</div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[
@@ -266,7 +267,7 @@ function DashboardPage() {
               <p className="mt-0.5 text-sm">Slot <span className="font-bold">B07</span> is likely to free up in 12 min near your usual bay. Want me to reserve it for you?</p>
             </div>
           </div>
-        </div>
+        </SpotlightCard>
         </motion.div>
 
 
@@ -274,7 +275,7 @@ function DashboardPage() {
         <motion.div variants={itemVariants} className="lg:col-span-1 flex flex-col gap-4">
           <WalletCard />
           
-          <div className="glass rounded-2xl p-6 flex flex-col h-full">
+          <SpotlightCard className="p-6 flex flex-col h-full">
           <div className="flex items-center justify-between mb-4">
             <div className="font-semibold text-lg">Recent bookings</div>
             <Link to="/history" className="text-xs text-primary hover:underline inline-flex items-center gap-1">View all <ArrowUpRight className="h-3 w-3" /></Link>
@@ -297,7 +298,7 @@ function DashboardPage() {
               <div className="text-center text-sm text-muted-foreground py-8">No recent bookings</div>
             )}
           </div>
-        </div>
+        </SpotlightCard>
       </motion.div>
     </div>
   </motion.div>
