@@ -57,10 +57,31 @@ function DashboardPage() {
   const [isFindMyCarOpen, setIsFindMyCarOpen] = useState(false);
   const [isLiveAROpen, setIsLiveAROpen] = useState(false);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
+
   return (
     <AppShell>
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
+      <motion.div 
+        variants={containerVariants} 
+        initial="hidden" 
+        animate="show"
+        className="w-full flex flex-col"
+      >
+        <motion.div variants={itemVariants} className="mb-8 flex flex-wrap items-end justify-between gap-4">
+          <div>
           <div className="text-sm text-muted-foreground">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </div>
@@ -72,11 +93,10 @@ function DashboardPage() {
         <div className="flex gap-2">
           <Button asChild variant="glass"><Link to="/slots"><MapPin className="h-4 w-4" />View slots</Link></Button>
           <Button asChild variant="hero"><Link to="/booking"><Plus className="h-4 w-4" />New booking</Link></Button>
-        </div>
-      </div>
+        </motion.div>
 
       {activeBooking && (
-        <div className={`mb-8 rounded-2xl bg-[linear-gradient(135deg,var(--${activeBooking.evDetails ? 'success' : 'primary'})/0.15,var(--secondary)/0.05)] border border-${activeBooking.evDetails ? 'success' : 'primary'}/20 p-6 overflow-hidden relative`}>
+        <motion.div variants={itemVariants} className={`mb-8 rounded-2xl bg-[linear-gradient(135deg,var(--${activeBooking.evDetails ? 'success' : 'primary'})/0.15,var(--secondary)/0.05)] border border-${activeBooking.evDetails ? 'success' : 'primary'}/20 p-6 overflow-hidden relative`}>
           <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
             {activeBooking.evDetails ? <Zap className="h-32 w-32" /> : <Car className="h-32 w-32" />}
           </div>
@@ -158,12 +178,12 @@ function DashboardPage() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
 
       {activeIncidents.length > 0 && (
-        <div className="mb-8 rounded-2xl bg-[linear-gradient(135deg,var(--destructive)/0.1,transparent)] border border-destructive/20 p-4">
+        <motion.div variants={itemVariants} className="mb-8 rounded-2xl bg-[linear-gradient(135deg,var(--destructive)/0.1,transparent)] border border-destructive/20 p-4">
           <div className="flex items-center gap-2 mb-2 text-destructive">
              <AlertTriangle className="h-5 w-5" />
              <h3 className="font-semibold text-foreground">Your Active Incidents</h3>
@@ -179,13 +199,13 @@ function DashboardPage() {
                </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       )}
 
       <div className="grid gap-4 lg:grid-cols-3 items-start mb-8">
         
         {/* Left Column: Stats & Quick Actions */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
+        <motion.div variants={itemVariants} className="lg:col-span-2 flex flex-col gap-4">
           
           {/* Stat Cards Row */}
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 items-start">
@@ -246,11 +266,11 @@ function DashboardPage() {
             </div>
           </div>
         </div>
-        </div>
+        </motion.div>
 
 
         {/* Right Column: Wallet & Recent Bookings */}
-        <div className="lg:col-span-1 flex flex-col gap-4">
+        <motion.div variants={itemVariants} className="lg:col-span-1 flex flex-col gap-4">
           <WalletCard />
           
           <div className="glass rounded-2xl p-6 flex flex-col h-full">
@@ -276,9 +296,8 @@ function DashboardPage() {
               <div className="text-center text-sm text-muted-foreground py-8">No recent bookings</div>
             )}
           </div>
-        </div>
-      </div>
-      </div>
+        </motion.div>
+      </motion.div>
       <ReportIncidentModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} defaultSlotNumber={activeBooking?.slotNumber} />
       {activeBooking && (
         <FindMyCarModal 
