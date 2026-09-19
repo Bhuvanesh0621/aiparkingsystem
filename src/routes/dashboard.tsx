@@ -93,7 +93,8 @@ function DashboardPage() {
         <div className="flex gap-2">
           <Button asChild variant="glass"><Link to="/slots"><MapPin className="h-4 w-4" />View slots</Link></Button>
           <Button asChild variant="hero"><Link to="/booking"><Plus className="h-4 w-4" />New booking</Link></Button>
-        </motion.div>
+        </div>
+      </motion.div>
 
       {activeBooking && (
         <motion.div variants={itemVariants} className={`mb-8 rounded-2xl bg-[linear-gradient(135deg,var(--${activeBooking.evDetails ? 'success' : 'primary'})/0.15,var(--secondary)/0.05)] border border-${activeBooking.evDetails ? 'success' : 'primary'}/20 p-6 overflow-hidden relative`}>
@@ -178,7 +179,7 @@ function DashboardPage() {
                 </div>
               </div>
             )}
-          </motion.div>
+          </div>
         </motion.div>
       )}
 
@@ -296,8 +297,10 @@ function DashboardPage() {
               <div className="text-center text-sm text-muted-foreground py-8">No recent bookings</div>
             )}
           </div>
-        </motion.div>
+        </div>
       </motion.div>
+    </div>
+  </motion.div>
       <ReportIncidentModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} defaultSlotNumber={activeBooking?.slotNumber} />
       {activeBooking && (
         <FindMyCarModal 
