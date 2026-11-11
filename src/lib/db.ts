@@ -6,11 +6,11 @@ import type {
 } from './store';
 
 // Helper to convert DB snake_case to camelCase
-const toCamel = (o: any) => {
+export const toCamel = (o: any): any => {
   if (o === null || o === undefined) return o;
   if (Array.isArray(o)) return o.map(toCamel);
   if (typeof o !== 'object') return o;
-  const n = {};
+  const n: any = {};
   for (const [key, value] of Object.entries(o)) {
     const camelKey = key.replace(/_([a-z])/g, g => g[1].toUpperCase());
     n[camelKey] = toCamel(value);
@@ -19,11 +19,11 @@ const toCamel = (o: any) => {
 };
 
 // Helper to convert camelCase to DB snake_case
-const toSnake = (o: any) => {
+export const toSnake = (o: any): any => {
   if (o === null || o === undefined) return o;
   if (Array.isArray(o)) return o.map(toSnake);
   if (typeof o !== 'object') return o;
-  const n = {};
+  const n: any = {};
   for (const [key, value] of Object.entries(o)) {
     const snakeKey = key.replace(/[A-Z]/g, g => `_${g.toLowerCase()}`);
     n[snakeKey] = toSnake(value);
