@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { auth } from "./auth";
 import { api } from "./db";
+import { isSupabaseConfigured } from "./supabase";
 
 export type SlotStatus = "available" | "occupied" | "reserved";
 export type VehicleType = "car" | "bike" | "ev" | "suv";
@@ -278,42 +279,233 @@ const initialMaintenanceRecords: MaintenanceRecord[] = [
   { id: "MR-1002", equipmentId: "EQ-CHG-005", type: "Repair", technician: "Amit Kumar", issue: "Connector fault, cooling unit failure", date: "2026-07-26T14:30:00Z", cost: 0, status: "In Progress" },
 ];
 
+const defaultDemoUsers: User[] = [
+  {
+    id: "U-BHUVANESH",
+    name: "Bhuvanesh Kumar",
+    email: "bhuvaneshkumar299@gmail.com",
+    password: "password123",
+    phone: "+91 98765 43210",
+    vehicles: [
+      { id: "V-BHU-1", plateNumber: "TN 05 BQ 8607", type: "ev", model: "Tesla Model 3 / EV", isDefault: true }
+    ],
+    role: "user",
+    status: "active",
+    joined: "2026-08-01T10:00:00.000Z",
+    walletBalance: 2500,
+    rewardPoints: 1200,
+    createdAt: "2026-08-01T10:00:00.000Z"
+  },
+  {
+    id: "U-RAGHU",
+    name: "Raghu Raj",
+    email: "2005raghuraj@gmail.com",
+    password: "password123",
+    phone: "+91 98765 43211",
+    vehicles: [
+      { id: "V-RAG-1", plateNumber: "TN 05 BQ 8607", type: "ev", model: "EV Sports Sedan", isDefault: true }
+    ],
+    role: "user",
+    status: "active",
+    joined: "2026-08-01T10:00:00.000Z",
+    walletBalance: 1800,
+    rewardPoints: 1000,
+    createdAt: "2026-08-01T10:00:00.000Z"
+  },
+  {
+    id: "A-SMARTPARK",
+    name: "SmartPark Admin",
+    email: "admin@smartpark.ai",
+    password: "password123",
+    phone: "+1 800 555 0199",
+    vehicles: [],
+    role: "admin",
+    status: "active",
+    joined: "2026-01-01T00:00:00.000Z",
+    walletBalance: 0,
+    rewardPoints: 0,
+    createdAt: "2026-01-01T00:00:00.000Z"
+  },
+  {
+    id: "A-001",
+    name: "Admin User",
+    email: "admin@example.com",
+    password: "password123",
+    phone: "+1 987 654 3210",
+    vehicles: [],
+    role: "admin",
+    status: "active",
+    joined: "2026-01-01T00:00:00.000Z",
+    walletBalance: 0,
+    rewardPoints: 0,
+    createdAt: "2026-01-01T00:00:00.000Z"
+  },
+  {
+    id: "U-001",
+    name: "Guest User",
+    email: "guest@example.com",
+    password: "password123",
+    phone: "+1 234 567 8900",
+    vehicles: [
+      { id: "V-GUEST-1", plateNumber: "MH 12 AB 4521", type: "car", model: "Sedan", isDefault: true }
+    ],
+    role: "user",
+    status: "active",
+    joined: new Date().toISOString(),
+    walletBalance: 1500,
+    rewardPoints: 1250,
+    createdAt: new Date().toISOString()
+  }
+];
+
+const defaultDemoBookings: Booking[] = [
+  {
+    id: "BK-LIVE-01",
+    userId: "U-BHUVANESH",
+    slotId: "S-14",
+    slotNumber: "S-14",
+    floor: 1,
+    vehicleNumber: "TN 05 BQ 8607",
+    vehicleType: "ev",
+    startTime: new Date(Date.now() - 3600000).toISOString(),
+    endTime: new Date(Date.now() + 7200000).toISOString(),
+    amount: 350,
+    status: "active",
+    paymentStatus: "paid",
+    qrPassCode: "SMARTPARK|S-14|2026-09-19|15:00|TN 05 BQ 8607",
+    evDetails: {
+      isCharging: true,
+      batteryLevel: 100,
+      estimatedTimeRemaining: 0,
+      idleTimeMinutes: 0,
+      idleFee: 0,
+      chargeStartTime: new Date(Date.now() - 3600000).toISOString(),
+      energyConsumed: 1028.0
+    }
+  },
+  {
+    id: "BK-LIVE-02",
+    userId: "U-RAGHU",
+    slotId: "S-14",
+    slotNumber: "S-14",
+    floor: 1,
+    vehicleNumber: "TN 05 BQ 8607",
+    vehicleType: "ev",
+    startTime: new Date(Date.now() - 3600000).toISOString(),
+    endTime: new Date(Date.now() + 7200000).toISOString(),
+    amount: 350,
+    status: "active",
+    paymentStatus: "paid",
+    qrPassCode: "SMARTPARK|S-14|2026-09-19|15:00|TN 05 BQ 8607",
+    evDetails: {
+      isCharging: true,
+      batteryLevel: 100,
+      estimatedTimeRemaining: 0,
+      idleTimeMinutes: 0,
+      idleFee: 0,
+      chargeStartTime: new Date(Date.now() - 3600000).toISOString(),
+      energyConsumed: 1028.0
+    }
+  },
+  {
+    id: "BK-HIST-01",
+    userId: "U-BHUVANESH",
+    slotId: "S-9",
+    slotNumber: "S-9",
+    floor: 1,
+    vehicleNumber: "TN 05 BQ 8607",
+    vehicleType: "car",
+    startTime: "2026-08-07T14:00:00.000Z",
+    endTime: "2026-08-07T16:00:00.000Z",
+    amount: 150,
+    status: "completed",
+    paymentStatus: "paid",
+    qrPassCode: "SMARTPARK|S-9|2026-08-07|14:00|TN 05 BQ 8607"
+  },
+  {
+    id: "BK-HIST-02",
+    userId: "U-BHUVANESH",
+    slotId: "S-37",
+    slotNumber: "S-37",
+    floor: 1,
+    vehicleNumber: "TN 05 BQ 8607",
+    vehicleType: "car",
+    startTime: "2026-08-06T11:00:00.000Z",
+    endTime: "2026-08-06T12:30:00.000Z",
+    amount: 100,
+    status: "completed",
+    paymentStatus: "paid",
+    qrPassCode: "SMARTPARK|S-37|2026-08-06|11:00|TN 05 BQ 8607"
+  },
+  {
+    id: "BK-HIST-03",
+    userId: "U-BHUVANESH",
+    slotId: "S-4",
+    slotNumber: "S-4",
+    floor: 1,
+    vehicleNumber: "TN 05 BQ 8607",
+    vehicleType: "car",
+    startTime: "2026-08-04T09:00:00.000Z",
+    endTime: "2026-08-04T11:00:00.000Z",
+    amount: 150,
+    status: "completed",
+    paymentStatus: "paid",
+    qrPassCode: "SMARTPARK|S-4|2026-08-04|09:00|TN 05 BQ 8607"
+  },
+  {
+    id: "BK-HIST-04",
+    userId: "U-RAGHU",
+    slotId: "S-9",
+    slotNumber: "S-9",
+    floor: 1,
+    vehicleNumber: "TN 05 BQ 8607",
+    vehicleType: "car",
+    startTime: "2026-08-07T14:00:00.000Z",
+    endTime: "2026-08-07T16:00:00.000Z",
+    amount: 150,
+    status: "completed",
+    paymentStatus: "paid",
+    qrPassCode: "SMARTPARK|S-9|2026-08-07|14:00|TN 05 BQ 8607"
+  },
+  {
+    id: "BK-HIST-05",
+    userId: "U-RAGHU",
+    slotId: "S-37",
+    slotNumber: "S-37",
+    floor: 1,
+    vehicleNumber: "TN 05 BQ 8607",
+    vehicleType: "car",
+    startTime: "2026-08-06T11:00:00.000Z",
+    endTime: "2026-08-06T12:30:00.000Z",
+    amount: 100,
+    status: "completed",
+    paymentStatus: "paid",
+    qrPassCode: "SMARTPARK|S-37|2026-08-06|11:00|TN 05 BQ 8607"
+  },
+  {
+    id: "BK-HIST-06",
+    userId: "U-RAGHU",
+    slotId: "S-4",
+    slotNumber: "S-4",
+    floor: 1,
+    vehicleNumber: "TN 05 BQ 8607",
+    vehicleType: "car",
+    startTime: "2026-08-04T09:00:00.000Z",
+    endTime: "2026-08-04T11:00:00.000Z",
+    amount: 150,
+    status: "completed",
+    paymentStatus: "paid",
+    qrPassCode: "SMARTPARK|S-4|2026-08-04|09:00|TN 05 BQ 8607"
+  }
+];
+
 const DEFAULT_STATE: StoreState = {
-  currentUserId: null,
+  currentUserId: "U-BHUVANESH",
   activeTicketBookingId: null,
   gateStatus: 'closed',
-  slots: initialSlots,
-  bookings: [],
-  users: [
-    {
-      id: "U-001",
-      name: "Guest User",
-      email: "guest@example.com",
-      password: "password123",
-      phone: "+1 234 567 8900",
-      vehicles: [],
-      role: "user",
-      status: "active",
-      joined: new Date().toISOString(),
-      walletBalance: 1500,
-      rewardPoints: 1250,
-      createdAt: new Date().toISOString()
-    },
-    {
-      id: "A-001",
-      name: "Admin User",
-      email: "admin@example.com",
-      password: "password123",
-      phone: "+1 987 654 3210",
-      vehicles: [],
-      role: "admin",
-      status: "active",
-      joined: new Date().toISOString(),
-      walletBalance: 0,
-      rewardPoints: 0,
-      createdAt: new Date().toISOString()
-    }
-  ],
+  slots: initialSlots.map(s => s.id === 'S-14' || s.slotNumber === 'A14' ? { ...s, status: 'occupied' } : s),
+  bookings: defaultDemoBookings,
+  users: defaultDemoUsers,
   emergencyRequests: [],
   notifications: [
     {
@@ -348,7 +540,25 @@ const DEFAULT_STATE: StoreState = {
 
 
 
-const INITIAL_STATE = DEFAULT_STATE;
+function getInitialPersistedState(): Partial<StoreState> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const raw = localStorage.getItem('smartpark_persisted_state');
+    if (raw) return JSON.parse(raw);
+  } catch (e) {}
+  return {};
+}
+
+const persisted = getInitialPersistedState();
+const INITIAL_STATE: StoreState = {
+  ...DEFAULT_STATE,
+  ...persisted,
+  users: [
+    ...DEFAULT_STATE.users,
+    ...((persisted.users || []).filter((pu: any) => !DEFAULT_STATE.users.some(du => du.id === pu.id || du.email === pu.email)))
+  ],
+  bookings: (persisted.bookings && persisted.bookings.length > 0) ? persisted.bookings : DEFAULT_STATE.bookings,
+};
 
 let currentState: StoreState = INITIAL_STATE;
 
@@ -425,6 +635,16 @@ let isSupabaseInitialized = false;
     setState: (newState: Partial<StoreState>) => {
       currentState = { ...currentState, ...newState };
       emitChange();
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('smartpark_persisted_state', JSON.stringify({
+            users: currentState.users,
+            bookings: currentState.bookings,
+            incidents: currentState.incidents,
+            currentUserId: currentState.currentUserId
+          }));
+        } catch (e) {}
+      }
       // Broadcast state to other tabs for seamless Expo demo
       if (newState.serviceRequests) {
         bc.postMessage({ type: 'SYNC_SERVICES', payload: newState.serviceRequests });
@@ -500,15 +720,16 @@ let isSupabaseInitialized = false;
     if (isSupabaseInitialized) return;
     isSupabaseInitialized = true;
     
-    await store.refreshData();
+    if (isSupabaseConfigured) {
+      await store.refreshData();
 
-    // Add polling fallback every 10 seconds to ensure data stays perfectly synchronized across Admin and User pages
-    // even if Supabase Realtime (postgres_changes) is not manually enabled in the Supabase Dashboard.
-    setInterval(() => {
-      store.refreshData();
-    }, 10000);
+      // Add polling fallback every 10 seconds to ensure data stays perfectly synchronized across Admin and User pages
+      // even if Supabase Realtime (postgres_changes) is not manually enabled in the Supabase Dashboard.
+      setInterval(() => {
+        store.refreshData();
+      }, 10000);
 
-    // Setup Real-time subscriptions
+      // Setup Real-time subscriptions
       if (api.subscribeToAll) {
         api.subscribeToAll((table: string, eventType: string, newRecord: any, oldRecord: any) => {
           const state = store.getState() as any;
@@ -584,9 +805,10 @@ let isSupabaseInitialized = false;
           store.refreshData();
         });
       }
+    }
       
-      // Start EV simulation loop
-      store.startEVSimulation();
+    // Start EV simulation loop
+    store.startEVSimulation();
   },
 
   startEVSimulation: () => {
@@ -747,10 +969,8 @@ let isSupabaseInitialized = false;
         }
       }
     } catch (error) {
-      console.error("Booking failed, rolling back:", error);
-      // Rollback on failure
-      store.setState({ bookings: prevBookings, slots: prevSlots, serviceRequests: prevServices });
-      throw error;
+      console.warn("Remote booking sync notice (retained local booking):", error);
+      // Retain optimistic booking locally so the user is never blocked
     }
   },
   extendBooking: async (id: string, additionalMinutes: number, cost: number) => {
@@ -808,9 +1028,7 @@ let isSupabaseInitialized = false;
          }
       }
     } catch (error) {
-      console.error("Failed to update booking, rolling back:", error);
-      store.setState({ bookings: prevBookings, slots: prevSlots });
-      throw error;
+      console.warn("Remote updateBooking notice (retained local booking):", error);
     }
   },
   addUser: (user: User) => {

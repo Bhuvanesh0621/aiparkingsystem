@@ -44,7 +44,7 @@ function LoginPage() {
   const savedCredsRaw = typeof window !== 'undefined' ? localStorage.getItem("smartpark_saved_credentials") : null;
   const savedCreds = savedCredsRaw ? JSON.parse(savedCredsRaw) : null;
   
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
+  const { register, setValue, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { 
       email: savedCreds?.email || "", 
@@ -120,6 +120,40 @@ function LoginPage() {
           <Button type="button" onClick={handleSubmit((d) => onSubmit(d))} variant="hero" size="lg" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Signing in…" : "Sign in"}
           </Button>
+        </div>
+
+        <div className="pt-2 border-t border-white/10 mt-2">
+          <div className="text-center text-xs text-muted-foreground uppercase tracking-wider mb-3">
+            Demo 1-Click Access
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs bg-white/5 hover:bg-white/10 border-white/10 text-foreground h-9"
+              onClick={() => {
+                setValue("email", "bhuvaneshkumar299@gmail.com");
+                setValue("password", "0621@2005");
+                onSubmit({ email: "bhuvaneshkumar299@gmail.com", password: "0621@2005", remember: true });
+              }}
+            >
+              <User className="mr-1.5 h-3.5 w-3.5 text-primary" /> User Demo
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="text-xs bg-white/5 hover:bg-white/10 border-white/10 text-foreground h-9"
+              onClick={() => {
+                setValue("email", "admin@smartpark.ai");
+                setValue("password", "password123");
+                onSubmit({ email: "admin@smartpark.ai", password: "password123", remember: true });
+              }}
+            >
+              <Shield className="mr-1.5 h-3.5 w-3.5 text-amber-400" /> Admin Demo
+            </Button>
+          </div>
         </div>
       </form>
     </AuthLayout>
