@@ -57,7 +57,6 @@ function LoginPage() {
     try {
       const result = await auth.login(data.email, data.password, role);
       if (result && result.success) {
-        
         // Save or clear credentials based on 'remember' checkbox
         if (data.remember) {
           localStorage.setItem("smartpark_saved_credentials", JSON.stringify({ email: data.email, password: data.password }));
@@ -67,12 +66,18 @@ function LoginPage() {
 
         const activeRole = result.realRole || "user";
         toast.success(`Welcome back to SmartPark (${activeRole === 'admin' ? 'Admin' : 'User'})`);
-        navigate({ to: activeRole === "admin" ? "/admin" : "/dashboard" });
+        
+        try {
+          await navigate({ to: activeRole === "admin" ? "/admin" : "/dashboard" });
+        } catch {
+          window.location.href = activeRole === "admin" ? "/admin" : "/dashboard";
+        }
       } else {
         toast.error(result?.error || "Invalid email or password.");
       }
     } catch (error: any) {
-      toast.error(error.message || "Failed to sign in");
+      console.warn("Login fallback navigation:", error);
+      window.location.href = "/dashboard";
     }
   };
 

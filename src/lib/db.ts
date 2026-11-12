@@ -57,17 +57,8 @@ export const api = {
     }
 
     try {
-      const [
-        { data: users },
-        { data: slots },
-        { data: bookings },
-        { data: incidents },
-        { data: availableServices },
-        { data: serviceRequests },
-        { data: emergencies },
-        { data: notifications },
-        { data: equipment },
-      ] = await Promise.all([
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1500));
+      const fetchPromise = Promise.all([
         supabase.from('users').select('*'),
         supabase.from('parking_slots').select('*'),
         supabase.from('bookings').select('*'),
@@ -78,6 +69,18 @@ export const api = {
         supabase.from('notifications').select('*'),
         supabase.from('equipment').select('*'),
       ]);
+
+      const [
+        { data: users },
+        { data: slots },
+        { data: bookings },
+        { data: incidents },
+        { data: availableServices },
+        { data: serviceRequests },
+        { data: emergencies },
+        { data: notifications },
+        { data: equipment },
+      ]: any = await Promise.race([fetchPromise, timeoutPromise]);
 
       return {
         users: (users || []).map(toCamel) as User[],

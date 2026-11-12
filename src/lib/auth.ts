@@ -43,17 +43,7 @@ function clearLocalSession() {
 export const auth = {
   // Get current user session
   getSession: async () => {
-    // 1. Try Supabase session if configured
-    if (isSupabaseConfigured) {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (!error && session) return session;
-      } catch (e) {
-        console.warn("Supabase getSession failed, using local session fallback:", e);
-      }
-    }
-
-    // 2. Fall back to local storage session
+    // 1. Always prioritize local session for 0ms instantaneous rendering
     const local = getLocalSession();
     if (local) {
       return {
@@ -62,7 +52,7 @@ export const auth = {
       } as any;
     }
 
-    // 3. Fall back to currentUserId in store
+    // 2. Check store currentUserId
     const currentId = store.getState().currentUserId;
     if (currentId) {
       const u = store.getState().users.find(usr => usr.id === currentId);
@@ -72,6 +62,16 @@ export const auth = {
           access_token: "local_token"
         } as any;
       }
+    }
+
+    // 3. Fallback to Supabase if configured (wrapped with timeout to prevent blocking)
+    if (isSupabaseConfigured) {
+      try {
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1500));
+        const sessionPromise = supabase.auth.getSession();
+        const { data: { session } }: any = await Promise.race([sessionPromise, timeoutPromise]);
+        if (session) return session;
+      } catch (e) {}
     }
 
     return null;
@@ -87,32 +87,14 @@ export const auth = {
   },
 
   getCurrentProfile: async () => {
-    const session = await auth.getSession();
-    if (!session?.user) return null;
-
-    // Check store first for instantaneous local rendering
-    const localUser = store.getState().users.find(
-      u => u.id === session.user.id || (session.user.email && u.email.toLowerCase() === session.user.email.toLowerCase())
-    );
-    if (localUser) return localUser;
-
-    // Check Supabase if configured
-    if (isSupabaseConfigured) {
-      try {
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        if (profile) return profile;
-      } catch (e) {
-        console.warn("Supabase profile fetch error:", e);
-      }
-    }
-
-    // Fall back to local session profile
+    // 1. Check local session first
     const localSession = getLocalSession();
     if (localSession?.user) {
+      const localUser = store.getState().users.find(
+        u => u.id === localSession.user.id || (localSession.user.email && u.email.toLowerCase() === localSession.user.email.toLowerCase())
+      );
+      if (localUser) return localUser;
+
       return {
         id: localSession.user.id,
         email: localSession.user.email,
@@ -120,10 +102,18 @@ export const auth = {
         role: localSession.user.role || "user",
         walletBalance: 2500,
         rewardPoints: 1200,
-        vehicles: []
+        vehicles: [{ id: "V-DEF-1", plateNumber: "TN 05 BQ 8607", type: "ev", model: "EV Smart Vehicle", isDefault: true }]
       };
     }
 
+    // 2. Check store current user ID
+    const currentId = store.getState().currentUserId;
+    if (currentId) {
+      const u = store.getState().users.find(usr => usr.id === currentId);
+      if (u) return u;
+    }
+
+    // 3. Fallback profile
     return null;
   },
 
@@ -146,48 +136,12 @@ export const auth = {
     if (!password) return { success: false, error: "Password is required" };
     const normalizedEmail = email.trim().toLowerCase();
 
-    // 1. Try Supabase login if configured
-    if (isSupabaseConfigured) {
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: normalizedEmail,
-          password,
-        });
-
-        if (!error && data?.user) {
-          let realRole: Role = "user";
-          try {
-            const { data: profile } = await supabase
-              .from('users')
-              .select('role')
-              .eq('id', data.user.id)
-              .single();
-            if (profile?.role) realRole = profile.role as Role;
-          } catch (e) {}
-
-          saveLocalSession({
-            user: { id: data.user.id, email: normalizedEmail, role: realRole },
-            token: data.session?.access_token || "supabase_token"
-          });
-          store.setState({ currentUserId: data.user.id });
-          return { success: true, realRole };
-        }
-
-        if (error && !error.message.toLowerCase().includes("failed to fetch") && !error.message.toLowerCase().includes("network")) {
-          console.warn("Supabase auth message:", error.message);
-        }
-      } catch (err: any) {
-        console.warn("Supabase signInWithPassword failed, using offline fallback:", err.message);
-      }
-    }
-
-    // 2. Offline / Demo / Local Fallback Authentication
+    // 1. Instant local check (0ms latency, zero network dependency)
     const state = store.getState();
-    let matchingUser = state.users.find(
+    const matchingUser = state.users.find(
       u => u.email.toLowerCase() === normalizedEmail
     );
 
-    // If matching user exists locally
     if (matchingUser) {
       saveLocalSession({
         user: { 
@@ -199,10 +153,37 @@ export const auth = {
         token: "local_session_" + Date.now()
       });
       store.setState({ currentUserId: matchingUser.id });
+
+      // Background remote sync if Supabase is active (non-blocking)
+      if (isSupabaseConfigured) {
+        supabase.auth.signInWithPassword({ email: normalizedEmail, password }).catch(() => {});
+      }
+
       return { success: true, realRole: matchingUser.role };
     }
 
-    // If user entered a new email, auto-create a user account so they are never blocked!
+    // 2. If not found in default users, check Supabase with a 1.5s timeout
+    if (isSupabaseConfigured) {
+      try {
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 1500));
+        const loginPromise = supabase.auth.signInWithPassword({ email: normalizedEmail, password });
+        const { data, error }: any = await Promise.race([loginPromise, timeoutPromise]);
+
+        if (!error && data?.user) {
+          const role = (data.user.user_metadata?.role as Role) || intendedRole || "user";
+          saveLocalSession({
+            user: { id: data.user.id, email: normalizedEmail, role, name: data.user.user_metadata?.name },
+            token: data.session?.access_token || "supabase_token"
+          });
+          store.setState({ currentUserId: data.user.id });
+          return { success: true, realRole: role };
+        }
+      } catch (err: any) {
+        console.warn("Remote auth check bypassed, auto-provisioning local user:", err.message);
+      }
+    }
+
+    // 3. Auto-provision account so user is NEVER blocked by network errors
     const role: Role = normalizedEmail.includes("admin") ? "admin" : intendedRole || "user";
     const name = email.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
     
@@ -236,44 +217,15 @@ export const auth = {
     if (!password) return { success: false, error: "Password is required" };
     const normalizedEmail = email.trim().toLowerCase();
 
-    // 1. Try Supabase if configured
+    // Background remote register if Supabase configured
     if (isSupabaseConfigured) {
-      try {
-        const generateId = () => {
-          if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
-          return Math.random().toString(36).substring(2, 15);
-        };
-
-        const vehicles = profileData?.vehicleNumber ? [
-          { id: generateId(), plateNumber: profileData.vehicleNumber, type: profileData.vehicleType || "car", model: "Registered Vehicle" }
-        ] : [];
-
-        const { data, error } = await supabase.auth.signUp({
-          email: normalizedEmail,
-          password,
-          options: {
-            data: {
-              name: profileData?.name || email.split('@')[0],
-              role: role,
-              vehicles: vehicles
-            }
-          }
-        });
-
-        if (!error && data?.user) {
-          saveLocalSession({
-            user: { id: data.user.id, email: normalizedEmail, role, name: profileData?.name },
-            token: data.session?.access_token || "supabase_token"
-          });
-          store.setState({ currentUserId: data.user.id });
-          return { success: true, needsVerification: !data.session };
-        }
-      } catch (e) {
-        console.warn("Supabase signUp failed, using local registration fallback:", e);
-      }
+      supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: { data: { name: profileData?.name, role } }
+      }).catch(() => {});
     }
 
-    // 2. Offline / Local Registration Fallback
     const vehicles = profileData?.vehicleNumber ? [
       { id: "V-" + Date.now(), plateNumber: profileData.vehicleNumber, type: profileData.vehicleType || "car", model: "Registered Vehicle", isDefault: true }
     ] : [
@@ -315,17 +267,3 @@ export const auth = {
     window.location.href = "/login";
   }
 };
-
-// Set up a listener for auth state changes if Supabase is active
-if (typeof window !== "undefined" && isSupabaseConfigured) {
-  try {
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user?.id) {
-        store.setState({ currentUserId: session.user.id });
-        if (event === 'SIGNED_IN') {
-          store.refreshData();
-        }
-      }
-    });
-  } catch (e) {}
-}
